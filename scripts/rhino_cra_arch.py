@@ -6,7 +6,7 @@
 import rhinoscriptsyntax as rs
 
 from compas_sandbox.algorithms import assembly_interfaces_numpy
-from compas_sandbox.equilibrium import cra_solve_native
+from compas_sandbox.equilibrium import cra_solve
 from compas_sandbox.geometry import Arch
 
 HEIGHT = 5.0  # rise, at most SPAN / 2
@@ -27,7 +27,7 @@ assembly = Arch(
 ).assembly()
 
 assembly_interfaces_numpy(assembly, nmax=10, amin=1e-2, tmax=1e-2)
-cra_solve_native(assembly, mu=MU)
+cra_solve(assembly, mu=MU)
 
 
 def ensure_layer(name, color):

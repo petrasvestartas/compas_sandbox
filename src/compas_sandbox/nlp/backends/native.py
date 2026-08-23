@@ -11,21 +11,17 @@ from ..problem import NLPResult
 
 __all__ = ["is_available", "solve"]
 
-# IPOPT ApplicationReturnStatus -> NLPResult status
+# IPOPT ApplicationReturnStatus -> NLPResult status. Feasible_Point_Found counts as
+# acceptable, matching the pyomo path (its result check passes both optimal and
+# feasible termination conditions).
 _STATUS = {
     0: NLPResult.OPTIMAL,  # Solve_Succeeded
     1: NLPResult.ACCEPTABLE,  # Solved_To_Acceptable_Level
     2: NLPResult.INFEASIBLE,  # Infeasible_Problem_Detected
+    6: NLPResult.ACCEPTABLE,  # Feasible_Point_Found
 }
 
 _DEFAULT_OPTIONS = {
-    # the tolerances cra_solve has always passed to the executable
-    "tol": 1e-10,
-    "constr_viol_tol": 1e-12,
-    "compl_inf_tol": 1e-12,
-    "acceptable_tol": 1e-8,
-    "acceptable_constr_viol_tol": 1e-8,
-    "acceptable_compl_inf_tol": 1e-8,
     "sb": "yes",  # suppress the ipopt banner
 }
 

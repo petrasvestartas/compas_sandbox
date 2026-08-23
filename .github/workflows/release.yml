@@ -1,280 +1,38 @@
 name: release
 
+# compas_sandbox is a pure Python package: the solver lives in compas_sandbox_native
+# (built by native.yml), which is a regular dependency. One universal wheel.
+
 on:
   push:
-    branches: [main, pypi]
+    branches: [main]
     tags: ["v*"]
   pull_request:
-    branches: [main, pypi]
+    branches: [main]
   workflow_dispatch:
 
-env:
-  IPOPT_VERSION: "3.14.19"
-
 jobs:
-  # ---------------------------------------------------------------------------
-  # One wheel per platform. There is no compiled Python extension - the wheels
-  # only differ in the ipopt executable they carry - so a single py3-none-<plat>
-  # wheel serves every supported Python version.
-  # ---------------------------------------------------------------------------
-  linux:
-    name: ${{ matrix.tag }}
-    runs-on: ${{ matrix.os }}
-    container: quay.io/pypa/manylinux_2_28_${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-            tag: manylinux_2_28_x86_64
-          - os: ubuntu-24.04-arm
-            arch: aarch64
-            tag: manylinux_2_28_aarch64
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build dependencies
-        run: |
-          dnf install -y --enablerepo=powertools \
-            glibc-static libstdc++-static openblas-static
-
-      - name: Cache ipopt binary
-        id: cache-ipopt
-        uses: actions/cache@v4
-        with:
-          path: |
-            src/compas_sandbox/_ipopt/bin
-            src/compas_sandbox/_ipopt/licenses
-          key: ipopt-${{ env.IPOPT_VERSION }}-${{ matrix.tag }}-${{ hashFiles('packaging/build_ipopt.sh') }}
-
-      - name: Build ipopt
-        if: steps.cache-ipopt.outputs.cache-hit != 'true'
-        run: packaging/build_ipopt.sh
-
-      - name: Audit binary
-        run: packaging/check_binary.sh src/compas_sandbox/_ipopt/bin/ipopt
-
-      - name: Build wheel
-        run: |
-          /opt/python/cp312-cp312/bin/python -m pip install -q build wheel
-          PATH=/opt/python/cp312-cp312/bin:$PATH packaging/build_wheel.sh ${{ matrix.tag }}
-
-      - name: Test wheel in a clean environment
-        run: packaging/test_wheel.sh /opt/python/cp312-cp312/bin/python
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheel-${{ matrix.tag }}
-          path: dist/*.whl
-
-  macos:
-    name: ${{ matrix.tag }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-15
-            tag: macosx_11_0_arm64
-          # macos-13 was retired; macos-15-intel is the x86_64 image
-          - os: macos-15-intel
-            tag: macosx_11_0_x86_64
-
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "11.0"
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install build dependencies
-        run: |
-          # coinbrew needs bash >= 4; macOS still ships 3.2 as /bin/bash
-          brew list bash >/dev/null 2>&1 || brew install bash
-          brew list gcc >/dev/null 2>&1 || brew install gcc
-          # The formula installs versioned binaries only (gfortran-14, ...).
-          test -x "$(brew --prefix)/bin/gfortran" || \
-            ln -sf "$(ls "$(brew --prefix)"/bin/gfortran-* | tail -1)" "$(brew --prefix)/bin/gfortran"
-          gfortran --version | head -1
-
-      - name: Cache ipopt binary
-        id: cache-ipopt
-        uses: actions/cache@v4
-        with:
-          path: |
-            src/compas_sandbox/_ipopt/bin
-            src/compas_sandbox/_ipopt/licenses
-          key: ipopt-${{ env.IPOPT_VERSION }}-${{ matrix.tag }}-${{ hashFiles('packaging/build_ipopt.sh') }}
-
-      - name: Build ipopt
-        if: steps.cache-ipopt.outputs.cache-hit != 'true'
-        run: packaging/build_ipopt.sh
-
-      - name: Audit binary
-        run: packaging/check_binary.sh src/compas_sandbox/_ipopt/bin/ipopt
-
-      - name: Build wheel
-        run: |
-          python -m pip install -q build wheel
-          packaging/build_wheel.sh ${{ matrix.tag }}
-
-      - name: Test wheel in a clean environment
-        run: packaging/test_wheel.sh python
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheel-${{ matrix.tag }}
-          path: dist/*.whl
-
-  windows:
-    name: win_amd64
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            patch
-            make
-            diffutils
-            pkgconf
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-gcc-fortran
-            mingw-w64-ucrt-x86_64-openblas
-
-      - name: Cache ipopt binary
-        id: cache-ipopt
-        uses: actions/cache@v4
-        with:
-          path: |
-            src/compas_sandbox/_ipopt/bin
-            src/compas_sandbox/_ipopt/licenses
-          key: ipopt-${{ env.IPOPT_VERSION }}-win_amd64-${{ hashFiles('packaging/build_ipopt.sh') }}
-
-      - name: Build ipopt
-        if: steps.cache-ipopt.outputs.cache-hit != 'true'
-        shell: msys2 {0}
-        run: packaging/build_ipopt.sh
-
-      - name: Audit binary
-        shell: msys2 {0}
-        run: packaging/check_binary.sh src/compas_sandbox/_ipopt/bin/ipopt.exe
-
-      # An exe with no version resource at all looks anonymous to Windows and its
-      # antivirus heuristics. Stamp truthful metadata (what it is, where it comes from,
-      # its version and license) into the binary before it is signed and packed.
-      - name: Stamp version metadata into ipopt.exe
-        shell: pwsh
-        run: |
-          $url = "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
-          Invoke-WebRequest -Uri $url -OutFile rcedit.exe
-          $hash = (Get-FileHash rcedit.exe -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne "3e7801db1a5edbec91b49a24a094aad776cb4515488ea5a4ca2289c400eade2a") {
-            throw "rcedit checksum mismatch: $hash"
-          }
-          $exe = "src\compas_sandbox\_ipopt\bin\ipopt.exe"
-          .\rcedit.exe $exe `
-            --set-version-string FileDescription "COIN-OR IPOPT nonlinear optimizer, bundled with the compas_sandbox Python package" `
-            --set-version-string ProductName "compas_sandbox" `
-            --set-version-string CompanyName "COIN-OR Foundation (built by the compas_sandbox open source project)" `
-            --set-version-string LegalCopyright "Eclipse Public License 2.0 - https://github.com/coin-or/Ipopt" `
-            --set-version-string OriginalFilename "ipopt.exe" `
-            --set-file-version "${{ env.IPOPT_VERSION }}" `
-            --set-product-version "${{ env.IPOPT_VERSION }}"
-          if ($LASTEXITCODE -ne 0) { throw "rcedit failed" }
-          (Get-Item $exe).VersionInfo | Format-List
-
-      # Authenticode-sign the bundled solver so Windows sees a known publisher instead
-      # of an anonymous binary. Runs only when the Azure Trusted Signing secrets are
-      # configured, so builds still pass before a certificate is set up. The exe must be
-      # signed here, before build_wheel.sh packs it into the wheel.
-      - name: Check for signing secrets
-        id: signing
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.AZURE_TENANT_ID }}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Azure Trusted Signing secrets not set - shipping the ipopt binary unsigned."
-          fi
-
-      - name: Azure login
-        if: steps.signing.outputs.enabled == 'true'
-        uses: azure/login@v2
-        with:
-          creds: >-
-            {"clientId":"${{ secrets.AZURE_CLIENT_ID }}",
-             "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}",
-             "tenantId":"${{ secrets.AZURE_TENANT_ID }}",
-             "subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}
-
-      - name: Sign ipopt.exe with Azure Trusted Signing
-        if: steps.signing.outputs.enabled == 'true'
-        uses: azure/trusted-signing-action@v0.5.9
-        with:
-          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
-          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
-          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
-          files: ${{ github.workspace }}\src\compas_sandbox\_ipopt\bin\ipopt.exe
-          file-digest: SHA256
-          timestamp-rfc3161: http://timestamp.acs.microsoft.com
-          timestamp-digest: SHA256
-
-      - name: Verify signature
-        if: steps.signing.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $sig = Get-AuthenticodeSignature src\compas_sandbox\_ipopt\bin\ipopt.exe
-          $sig | Format-List
-          if ($sig.Status -ne 'Valid') { throw "ipopt.exe is not validly signed: $($sig.Status)" }
-
-      - name: Build wheel
-        shell: bash
-        run: |
-          python -m pip install -q build wheel
-          packaging/build_wheel.sh win_amd64
-
-      - name: Test wheel in a clean environment
-        shell: bash
-        run: packaging/test_wheel.sh python
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheel-win_amd64
-          path: dist/*.whl
-
-  sdist:
-    name: sdist
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pipx run build --sdist
+      - run: pipx run build
+      - name: Test the built wheel in a clean environment
+        run: |
+          python -m venv venv-test
+          venv-test/bin/pip install -q dist/*.whl pytest
+          cd /tmp && "$GITHUB_WORKSPACE/venv-test/bin/python" -m pytest "$GITHUB_WORKSPACE/tests" -v
       - uses: actions/upload-artifact@v4
         with:
-          name: sdist
-          path: dist/*.tar.gz
+          name: dist
+          path: dist/*
 
   publish:
     name: publish to PyPI
-    needs: [linux, macos, windows, sdist]
+    needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment:
@@ -282,27 +40,10 @@ jobs:
     permissions:
       id-token: write  # required for trusted publishing
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheel-*
+          name: dist
           path: dist
-          merge-multiple: true
-      - uses: actions/download-artifact@v4
-        with:
-          name: sdist
-          path: dist
-      - run: ls -lh dist
-
-      # A green build is not enough: a renamed job or a dropped artifact would publish
-      # a partial release, and a pure py3-none-any wheel would install everywhere and
-      # then fail at the first solve. Neither is visible without looking inside.
-      - name: Verify every platform is present and every wheel carries a solver
-        run: python packaging/check_release.py dist
-
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
@@ -315,12 +56,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheel-*
-          path: dist
-          merge-multiple: true
-      - uses: actions/download-artifact@v4
-        with:
-          name: sdist
+          name: dist
           path: dist
       - uses: softprops/action-gh-release@v2
         with:

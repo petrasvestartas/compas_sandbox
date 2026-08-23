@@ -1,36 +1,16 @@
 # Packaging
 
-`compas_sandbox` solves its models with [pyomo](https://pyomo.readthedocs.io), which drives
-[IPOPT](https://coin-or.github.io/Ipopt/) through the AMPL `.nl` file interface: it
-shells out to the `ipopt` **command line executable** rather than linking against the
-library. That executable has never been installable with pip - `cyipopt` publishes an
-sdist only and needs a system IPOPT to compile against, and coin-or's own releases carry
-Windows binaries only - which is why installing `compas_sandbox` used to require conda, plus
-a manual download and copy of solver binaries on Windows.
-
-These scripts remove that requirement by building `ipopt` from source in CI and shipping
-it inside the platform wheels.
-
-Because no compiled Python extension is involved, **one `py3-none-<platform>` wheel per
-platform serves every supported Python version**:
-
-| wheel | built on |
-| --- | --- |
-| `py3-none-manylinux_2_28_x86_64` | `quay.io/pypa/manylinux_2_28_x86_64` |
-| `py3-none-manylinux_2_28_aarch64` | `quay.io/pypa/manylinux_2_28_aarch64` on an arm runner |
-| `py3-none-macosx_11_0_arm64` | `macos-15` |
-| `py3-none-macosx_11_0_x86_64` | `macos-15-intel` |
-| `py3-none-win_amd64` | `windows-latest` + MSYS2 UCRT64 |
-
-## Scripts
+`compas_sandbox` solves its models with [IPOPT](https://coin-or.github.io/Ipopt/)
+compiled into a Python extension module — the `compas_sandbox_native` package in
+[`native/`](../native). `build_ipopt.sh` builds IPOPT (with the MUMPS linear solver)
+from source with coinbrew as **static libraries**, staged into `build/ipopt/stage`;
+the extension links against that stage tree. `.github/workflows/native.yml` runs the
+build per platform and packs the extension wheels for CPython 3.9–3.13 with
+cibuildwheel.
 
 | script | what it does |
 | --- | --- |
-| `build_ipopt.sh` | builds `ipopt` with coinbrew and stages it into `src/compas_sandbox/_ipopt/bin/` |
-| `check_binary.sh` | runs the binary and asserts it has no non-system dynamic dependencies |
-| `build_wheel.sh <tag>` | builds the wheel and forces the `py3-none-<tag>` tag |
-| `test_wheel.sh [python]` | installs the wheel into a clean venv and runs the test suite there |
-| `check_release.py [dist]` | refuses a release missing a platform wheel, or missing a solver |
+| `build_ipopt.sh` | builds IPOPT + MUMPS from source and stages libraries and headers into `build/ipopt/stage` |
 
 ## What goes into the binary
 

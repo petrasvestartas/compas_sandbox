@@ -1,9 +1,10 @@
-"""CRA solver on the in-process IPOPT binding — no pyomo, no subprocess.
+"""CRA, CRA-penalty and RBE solvers on the in-process IPOPT binding.
 
-Solves exactly the problem :func:`~compas_sandbox.equilibrium.cra_solve` solves, with
-the same tolerances, and writes the same results to the assembly (``interface.forces``
-per contact interface and a ``displacement`` attribute per free node). The two solvers
-are interchangeable; the test suite asserts that their results match.
+No pyomo, no subprocess: each solver builds its problem with
+:mod:`~compas_sandbox.equilibrium.cra_nlp` and solves through the
+``compas_sandbox_native`` extension, writing the same results to the assembly as the
+historical pyomo + executable path (per-interface ``interface.forces`` and a
+``displacement`` attribute per free node).
 """
 
 import time
@@ -11,9 +12,29 @@ import time
 from compas_assembly.datastructures import Assembly
 
 from ..nlp import solve_nlp
+from .cra_nlp import cra_penalty_problem
 from .cra_nlp import cra_problem
+from .cra_nlp import rbe_problem
 
-__all__ = ["cra_solve_native"]
+__all__ = ["cra_solve_native", "cra_penalty_solve_native", "rbe_solve_native"]
+
+# the tolerances the CRA solver has always used
+_CRA_OPTIONS = {
+    "tol": 1e-10,
+    "constr_viol_tol": 1e-12,
+    "compl_inf_tol": 1e-12,
+    "acceptable_tol": 1e-8,
+    "acceptable_constr_viol_tol": 1e-8,
+    "acceptable_compl_inf_tol": 1e-8,
+}
+
+# the tolerances the CRA penalty solver has always used
+_CRA_PENALTY_OPTIONS = {
+    "tol": 1e-8,
+    "constr_viol_tol": 1e-7,
+    "acceptable_tol": 1e-6,
+    "acceptable_constr_viol_tol": 1e-5,
+}
 
 
 def cra_solve_native(
@@ -25,53 +46,91 @@ def cra_solve_native(
     verbose: bool = False,
     timer: bool = False,
 ) -> Assembly:
-    """CRA solver using the in-process IPOPT binding.
+    """CRA solver (paper Eq. 11) using the in-process IPOPT binding."""
+    problem, layout = _timed(
+        timer, lambda: cra_problem(assembly, mu=mu, density=density, d_bnd=d_bnd, eps=eps), "set up"
+    )
+    result = _timed(
+        timer, lambda: solve_nlp(problem, backend="native", options=_CRA_OPTIONS, verbose=verbose), "solving"
+    )
+    _check(result)
+    _result_to_assembly(result.x, layout, assembly, shift=3, verbose=verbose)
+    return assembly
 
-    Same parameters, same results as :func:`~compas_sandbox.equilibrium.cra_solve`;
-    requires the ``compas_sandbox_native`` package instead of the bundled executable.
-    """
+
+def cra_penalty_solve_native(
+    assembly: Assembly,
+    mu: float = 0.84,
+    density: float = 1.0,
+    d_bnd: float = 1e-3,
+    eps: float = 1e-4,
+    verbose: bool = False,
+    timer: bool = False,
+) -> Assembly:
+    """CRA penalty solver (paper Eq. 14) using the in-process IPOPT binding."""
+    problem, layout = _timed(
+        timer, lambda: cra_penalty_problem(assembly, mu=mu, density=density, d_bnd=d_bnd, eps=eps), "set up"
+    )
+    result = _timed(
+        timer, lambda: solve_nlp(problem, backend="native", options=_CRA_PENALTY_OPTIONS, verbose=verbose), "solving"
+    )
+    _check(result)
+    _result_to_assembly(result.x, layout, assembly, shift=4, verbose=verbose)
+    return assembly
+
+
+def rbe_solve_native(
+    assembly: Assembly,
+    mu: float = 0.84,
+    density: float = 1.0,
+    verbose: bool = False,
+    timer: bool = False,
+) -> Assembly:
+    """RBE solver (paper Eq. 6) using the in-process IPOPT binding."""
+    problem, layout = _timed(timer, lambda: rbe_problem(assembly, mu=mu, density=density), "set up")
+    result = _timed(timer, lambda: solve_nlp(problem, backend="native", verbose=verbose), "solving")
+    _check(result)
+    _result_to_assembly(result.x, layout, assembly, shift=4, verbose=verbose)
+    return assembly
+
+
+def _timed(timer, fn, label):
+    start = time.time()
+    out = fn()
     if timer:
-        start_time = time.time()
+        print("--- %s time: %s seconds ---" % (label, time.time() - start))
+    return out
 
-    problem, layout = cra_problem(assembly, mu=mu, density=density, d_bnd=d_bnd, eps=eps)
 
-    if timer:
-        print("--- set up time: %s seconds ---" % (time.time() - start_time))
-        start_time = time.time()
-
-    result = solve_nlp(problem, backend="native", verbose=verbose)
-
-    if timer:
-        print("--- solving time: %s seconds ---" % (time.time() - start_time))
-
+def _check(result):
     if not result.success:
         raise ValueError("solve failed: {} ({})".format(result.status, result.status_message))
     print("result: ", result.status)
 
-    _result_to_assembly(result.x, layout, assembly, verbose=verbose)
-    return assembly
 
-
-def _result_to_assembly(x, layout, assembly, verbose=False):
+def _result_to_assembly(x, layout, assembly, shift, verbose=False):
     """Write the solution vector to the assembly, mirroring pyomo_result_assembly."""
     f = x[layout["f"]]
-    q = x[layout["q"]]
 
     offset = 0
     for edge in assembly.graph.edges():
         for interface in assembly.graph.edge_attribute(edge, "interfaces"):
             interface.forces = []
             for i in range(len(interface.points)):
+                base = offset + shift * i
                 interface.forces.append(
                     {
-                        "c_np": float(f[offset + 3 * i + 0]),
-                        "c_nn": 0,
-                        "c_u": float(f[offset + 3 * i + 1]),
-                        "c_v": float(f[offset + 3 * i + 2]),
+                        "c_np": float(f[base + 0]),
+                        "c_nn": float(f[base + 1]) if shift == 4 else 0,
+                        "c_u": float(f[base + shift - 2]),
+                        "c_v": float(f[base + shift - 1]),
                     }
                 )
-            offset += 3 * len(interface.points)
+            offset += shift * len(interface.points)
 
+    if layout["q"] is None:
+        return
+    q = x[layout["q"]]
     if verbose:
         print("q:", list(q))
     offset = 0

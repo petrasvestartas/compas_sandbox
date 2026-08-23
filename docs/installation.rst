@@ -12,9 +12,9 @@ Stable
     pip install compas_sandbox
 
 That is all that is needed, on Windows, macOS (Apple Silicon and Intel) and Linux.
-The wheels bundle a statically linked `IPOPT <https://coin-or.github.io/Ipopt/>`_
-executable, so no conda environment, no homebrew and no manual download of solver
-binaries are required.
+The `IPOPT <https://coin-or.github.io/Ipopt/>`_ solver is compiled into the
+``compas_sandbox_native`` dependency as a Python extension module, so solving happens
+in-process: no conda environment, no homebrew and no solver executables are involved.
 
 To also install the viewers:
 
@@ -26,7 +26,22 @@ Verify the solver is available with:
 
 .. code-block:: bash
 
-    compas-sandbox-ipopt --version
+    python -c "import compas_sandbox_native as n; print(n.IPOPT_VERSION)"
+
+
+Rhino 8
+=======
+
+Start a Python 3 script in the ScriptEditor with this header and run it — Rhino
+installs everything on the first run:
+
+.. code-block:: python
+
+    #! python3
+    # venv: compas-sandbox
+    # r: compas_sandbox
+
+Ready-to-run examples are in the repository under ``scripts/``.
 
 
 Latest
@@ -40,25 +55,13 @@ The latest version can be installed from local source.
     cd compas_sandbox
     pip install -e ".[dev]"
 
-A source install contains no IPOPT binary, since that is added to the wheels at build
-time. Either build one with ``packaging/build_ipopt.sh`` (see ``packaging/README.md``),
-or provide ``ipopt`` yourself on the ``PATH`` - which is what the conda development
-environment does:
+The solver extension installs from PyPI as a dependency. To build it from source
+instead (for development on the binding itself), build the static IPOPT tree first and
+then install the extension package:
 
 .. code-block:: bash
 
-    conda env create -f environment.yml
-    conda activate cra-dev
+    packaging/build_ipopt.sh
+    pip install ./native
 
-
-Conda
-=====
-
-Using conda for the solver is still supported: if no bundled binary is present,
-``compas_sandbox`` falls back to whatever ``ipopt`` is on the ``PATH``.
-
-.. code-block:: bash
-
-    conda create -n cra -c conda-forge python=3.10 ipopt compas compas_viewer
-    conda activate cra
-    pip install compas_assembly compas_sandbox
+See ``native/README.md`` and ``packaging/README.md`` for details.

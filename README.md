@@ -17,13 +17,13 @@
 pip install compas_sandbox
 ```
 
-Nothing else is needed on Windows, macOS (Apple Silicon and Intel) or Linux: the wheels
-bundle a statically linked [IPOPT](https://coin-or.github.io/Ipopt/) 3.14.19 executable
-(Eclipse Public License 2.0, MUMPS linear solver, no HSL), built from source by
-[`packaging/`](./packaging). See [`packaging/README.md`](./packaging/README.md) for how
-it is built and which licenses apply, and the
-[installation docs](https://github.com/petrasvestartas/compas_sandbox/latest/installation.html)
-for development installs.
+Nothing else is needed on Windows, macOS (Apple Silicon and Intel) or Linux. The
+[IPOPT](https://coin-or.github.io/Ipopt/) 3.14.19 solver (Eclipse Public License 2.0,
+MUMPS linear solver, no HSL) is compiled into the `compas_sandbox_native` dependency as
+a Python extension module with [nanobind](https://github.com/wjakob/nanobind), so
+solving happens in-process — no solver executables, no subprocess, no conda. See
+[`native/README.md`](./native/README.md) for how the extension is built and
+[`packaging/README.md`](./packaging/README.md) for the IPOPT build itself.
 
 ### Rhino 8
 
@@ -38,9 +38,8 @@ couple of minutes, watch the progress in the ScriptEditor console):
 # r: compas_sandbox
 ```
 
-No extra `# r:` lines are needed for `compas`, `numpy`, `shapely`, etc. — they are
-dependencies of `compas_sandbox` and pip installs them automatically. The bundled IPOPT
-executable works inside Rhino as well, so no conda or manual solver install is needed.
+No extra `# r:` lines are needed for `compas`, `numpy`, `shapely` or the solver — they
+are dependencies of `compas_sandbox` and pip installs them automatically.
 
 Ready-to-run examples for the ScriptEditor are in [`scripts/`](./scripts):
 
@@ -58,31 +57,11 @@ Rhino (`Tools > Options > Plugins > Rhino Code > Open Shell`, or
 pip install compas_sandbox
 ```
 
-Note that Rhino 8 ships CPython 3.9: `compas_sandbox` supports it since version 0.6.2,
-and pip automatically selects dependency versions that still support 3.9 (for example
-`pyomo` 6.9.x rather than 6.10+).
-
-### Known issue: Windows antivirus and the bundled solver
-
-The wheels bundle an `ipopt.exe` built from source by CI. Because every release
-produces a brand-new, unsigned binary with no reputation, some Windows antivirus
-setups (notably managed/corporate Defender policies) quarantine it after the first
-run. The symptom is a solve that worked once and then fails with
-"No IPOPT executable found" — run [`scripts/rhino_ipopt_check.py`](./scripts/rhino_ipopt_check.py)
-to confirm (an empty `bin dir` means the exe was removed).
-
-What to do:
-
-- **Personal machine**: restore the file from the antivirus quarantine and add an
-  exclusion for the install folder (e.g. `%USERPROFILE%\.rhinocode` for Rhino), then
-  `pip install --force-reinstall --only-binary :all: compas_sandbox`.
-- **Managed machine (no admin rights)**: ask IT to allowlist the file or folder, or
-  point the solver at any trusted ipopt binary by setting the environment variable
-  `COMPAS_SANDBOX_IPOPT` to its full path (a
-  [conda-forge ipopt](https://anaconda.org/conda-forge/ipopt) works).
-- The binaries carry version metadata identifying what they are, and the release
-  workflow supports Authenticode signing (Azure Trusted Signing) once a certificate
-  is configured, which resolves this properly.
+Note that Rhino 8 ships CPython 3.9, which is fully supported: solver wheels exist for
+CPython 3.9–3.13 on all platforms. Since the solver is a regular Python extension
+module rather than an executable, it is also not affected by the antivirus policies
+that quarantine unknown `.exe` files on managed Windows machines. To verify the solver
+in any environment, run [`scripts/rhino_ipopt_check.py`](./scripts/rhino_ipopt_check.py).
 
 To find out more about CRA, please refer to our paper in the CAD Computer-Aided Design journal:
 [https://doi.org/10.1016/j.cad.2022.103216](https://doi.org/10.1016/j.cad.2022.103216 )

@@ -30,13 +30,6 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 
-# The platform wheels bundle an ipopt executable (see packaging/build_ipopt.sh), which
-# is what makes `pip install compas_sandbox` enough to actually solve something. The command
-# is deliberately not called `ipopt`: pip would install it over a conda environment's own
-# bin/ipopt, and compas_sandbox would then find its own wrapper instead of a real solver.
-[project.scripts]
-compas-sandbox-ipopt = "compas_sandbox._ipopt.__main__:main"
-
 [project.urls]
 Homepage = "https://github.com/petrasvestartas/compas_sandbox"
 Documentation = "https://github.com/petrasvestartas/compas_sandbox"
@@ -61,7 +54,6 @@ optional-dependencies = { dev = { file = "requirements-dev.txt" }, viz = { file 
 where = ["src"]
 
 [tool.setuptools.package-data]
-"compas_sandbox._ipopt" = ["bin/*", "licenses/*"]
 # data/ is not a package, so it needs an explicit glob to end up in the wheel
 "compas_sandbox" = ["data/samples/*.json"]
 

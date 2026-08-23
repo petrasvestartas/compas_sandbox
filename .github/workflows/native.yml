@@ -24,7 +24,6 @@ jobs:
   linux:
     name: native-${{ matrix.tag }}
     runs-on: ${{ matrix.os }}
-    container: quay.io/pypa/manylinux_2_28_${{ matrix.arch }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,45 +38,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install build dependencies
-        run: |
-          dnf install -y --enablerepo=powertools \
-            glibc-static libstdc++-static openblas-static openblas-devel
-
-      - name: Cache PIC ipopt build
-        id: cache-ipopt
-        uses: actions/cache@v4
+      - uses: actions/setup-python@v5
         with:
-          path: build/ipopt/stage
-          key: ipopt-stage-pic-${{ env.IPOPT_VERSION }}-${{ matrix.tag }}-${{ hashFiles('packaging/build_ipopt.sh') }}
-
-      - name: Build ipopt (PIC)
-        if: steps.cache-ipopt.outputs.cache-hit != 'true'
-        run: |
-          export CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC"
-          packaging/build_ipopt.sh
+          python-version: "3.12"
 
       - name: Build wheels
+        env:
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          # everything builds inside the manylinux container: dependencies, then IPOPT
+          # itself with PIC objects so the static archives link into the extension
+          CIBW_BEFORE_ALL_LINUX: >-
+            dnf install -y --enablerepo=powertools
+            glibc-static libstdc++-static openblas-static openblas-devel &&
+            env CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC"
+            {project}/packaging/build_ipopt.sh
+          CIBW_ENVIRONMENT_LINUX: IPOPT_PREFIX=/project/build/ipopt/stage
+          CIBW_TEST_REQUIRES: numpy
+          CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |
-          export IPOPT_PREFIX="$PWD/build/ipopt/stage"
-          mkdir -p raw dist
-          for py in $PYTHONS; do
-            pybin=$(ls -d /opt/python/${py}-${py}*/bin | head -1)
-            echo "=== $pybin ==="
-            "$pybin/python" -m pip wheel ./native --no-deps -w raw
-          done
-          for whl in raw/*.whl; do
-            auditwheel repair "$whl" -w dist
-          done
+          python -m pip install -q cibuildwheel
+          python -m cibuildwheel native --output-dir dist
           ls -lh dist
-
-      - name: Test each wheel
-        run: |
-          for py in $PYTHONS; do
-            pybin=$(ls -d /opt/python/${py}-${py}*/bin | head -1)
-            "$pybin/python" -m pip install -q numpy dist/compas_sandbox_native-*-${py}-*.whl
-            "$pybin/python" native/tests/smoke.py
-          done
 
       - uses: actions/upload-artifact@v4
         with:

@@ -11,7 +11,7 @@ import rhinoscriptsyntax as rs
 import compas_sandbox
 from compas_sandbox.algorithms import assembly_interfaces_numpy
 from compas_sandbox.datastructures import CRA_Assembly
-from compas_sandbox.equilibrium import cra_solve_native
+from compas_sandbox.equilibrium import cra_solve
 
 FORCE_SCALE = 0.5
 FORCE_RADIUS = 0.03  # pipe radius of the drawn force lines
@@ -21,7 +21,7 @@ assembly = assembly.copy(cls=CRA_Assembly)
 assembly.set_boundary_conditions([0])
 
 assembly_interfaces_numpy(assembly, nmax=10, amin=1e-2, tmax=1e-2)
-cra_solve_native(assembly)
+cra_solve(assembly)
 
 
 def ensure_layer(name, color):

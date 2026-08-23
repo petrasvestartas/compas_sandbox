@@ -1,9 +1,10 @@
-- :mod:`compas_sandbox` uses the `IPOPT <https://coin-or.github.io/Ipopt/>`_ solver with the
-  MUMPS linear solver. Ill-conditioned assemblies can end in a non-optimal termination
-  condition, which is reported as a :class:`ValueError` by
-  :func:`compas_sandbox.equilibrium.pyomo_helper.pyomo_result_check`.
+- :mod:`compas_sandbox` uses the `IPOPT <https://coin-or.github.io/Ipopt/>`_ solver with
+  the MUMPS linear solver. Ill-conditioned assemblies can end in a non-optimal
+  termination condition, which is reported as a :class:`ValueError` by the solver
+  functions.
 
-- If ``compas_sandbox`` was installed from a source distribution rather than a wheel, no
-  IPOPT executable is bundled and one has to be available on the ``PATH`` instead. Not
-  having one raises ``RuntimeError: No IPOPT executable found``. Installing a binary
-  wheel with ``pip install compas_sandbox`` is the simplest fix.
+- The solver is provided by the ``compas_sandbox_native`` package, a compiled extension
+  installed automatically as a dependency. If importing it fails (for example on a
+  platform without prebuilt wheels), build it from source: run
+  ``packaging/build_ipopt.sh`` and then ``pip install ./native`` — see
+  ``native/README.md``.
