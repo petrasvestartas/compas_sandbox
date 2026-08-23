@@ -1,5 +1,6 @@
 [build-system]
-requires = ["scikit-build-core>=0.10", "nanobind>=2.2"]
+# nanobind 3.x dropped Python 3.9, which Rhino 8 still ships — stay on 2.x
+requires = ["scikit-build-core>=0.10", "nanobind>=2.2,<3"]
 build-backend = "scikit_build_core.build"
 
 [project]
