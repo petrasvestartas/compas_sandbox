@@ -174,6 +174,51 @@ jobs:
         shell: msys2 {0}
         run: packaging/check_binary.sh src/compas_sandbox/_ipopt/bin/ipopt.exe
 
+      # Authenticode-sign the bundled solver so Windows sees a known publisher instead
+      # of an anonymous binary. Runs only when the Azure Trusted Signing secrets are
+      # configured, so builds still pass before a certificate is set up. The exe must be
+      # signed here, before build_wheel.sh packs it into the wheel.
+      - name: Check for signing secrets
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.AZURE_TENANT_ID }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure Trusted Signing secrets not set - shipping the ipopt binary unsigned."
+          fi
+
+      - name: Azure login
+        if: steps.signing.outputs.enabled == 'true'
+        uses: azure/login@v2
+        with:
+          creds: >-
+            {"clientId":"${{ secrets.AZURE_CLIENT_ID }}",
+             "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}",
+             "tenantId":"${{ secrets.AZURE_TENANT_ID }}",
+             "subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}"}
+
+      - name: Sign ipopt.exe with Azure Trusted Signing
+        if: steps.signing.outputs.enabled == 'true'
+        uses: azure/trusted-signing-action@v0.5.9
+        with:
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files: ${{ github.workspace }}\src\compas_sandbox\_ipopt\bin\ipopt.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Verify signature
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          $sig = Get-AuthenticodeSignature src\compas_sandbox\_ipopt\bin\ipopt.exe
+          $sig | Format-List
+          if ($sig.Status -ne 'Valid') { throw "ipopt.exe is not validly signed: $($sig.Status)" }
+
       - name: Build wheel
         shell: bash
         run: |
