@@ -1,25 +1,23 @@
-name: native
+name: pipeline
 
-# Build-only CI for the compas_sandbox_native wheels: validates native code changes
-# on push. Publishing happens exclusively in release.yml, which builds the same
-# matrix in order (natives first, then the pure package) on v* tags.
+# The single build pipeline, used by build.yml (every push, publish: false) and
+# release.yml (tags, publish: true). Always the full chain: IPOPT compiled from
+# source, native wheels for every platform, each smoke-tested, and the pure package
+# tested against the just-built native wheel. With publish: true it then publishes
+# native -> sandbox in order, creates the GitHub release and deploys the docs.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "native/**"
-      - "src/compas_sandbox/nlp/**"
-      - "packaging/build_ipopt.sh"
-      - ".github/workflows/native.yml"
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: false
 
 env:
   IPOPT_VERSION: "3.14.19"
-  PYTHONS: "cp39 cp310 cp311 cp312 cp313"
 
 jobs:
-  linux:
+  native-linux:
     name: native-${{ matrix.tag }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -32,23 +30,18 @@ jobs:
           - os: ubuntu-24.04-arm
             arch: aarch64
             tag: manylinux_2_28_aarch64
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Build wheels
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
-          CIBW_SKIP: "*-musllinux_*"  # glibc wheels only, same coverage as before
+          CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
-          # everything builds inside the manylinux container: dependencies, then IPOPT
-          # itself with PIC objects so the static archives link into the extension
           CIBW_BEFORE_ALL_LINUX: >-
             dnf install -y --enablerepo=powertools
             glibc-static libstdc++-static openblas-static openblas-devel &&
@@ -60,62 +53,49 @@ jobs:
         run: |
           python -m pip install -q cibuildwheel
           python -m cibuildwheel native --output-dir dist
-          ls -lh dist
-
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.tag }}
           path: dist/*.whl
 
-  macos:
+  native-macos:
     name: native-${{ matrix.tag }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macos-14: Homebrew's libgfortran bottle there targets macOS 14, so the
-          # wheels reach macOS 14+ instead of 15+
           - os: macos-14
             tag: macosx_arm64
             deployment_target: "14.0"
           - os: macos-15-intel
             tag: macosx_x86_64
             deployment_target: "15.0"
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install build dependencies
         run: |
           brew list bash >/dev/null 2>&1 || brew install bash
           brew list gcc >/dev/null 2>&1 || brew install gcc
           test -x "$(brew --prefix)/bin/gfortran" || \
             ln -sf "$(ls "$(brew --prefix)"/bin/gfortran-* | tail -1)" "$(brew --prefix)/bin/gfortran"
-          gfortran --version | head -1
-
       - name: Cache ipopt build
         id: cache-ipopt
         uses: actions/cache@v4
         with:
           path: build/ipopt/stage
           key: ipopt-stage-${{ env.IPOPT_VERSION }}-${{ matrix.tag }}-${{ hashFiles('packaging/build_ipopt.sh') }}
-
       - name: Build ipopt
         if: steps.cache-ipopt.outputs.cache-hit != 'true'
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: packaging/build_ipopt.sh
-
       - name: Build wheels
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
-          # the bundled Homebrew libgfortran targets the runner's macOS, so the wheel
-          # has to as well
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX=${{ github.workspace }}/build/ipopt/stage
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.deployment_target }}
@@ -124,29 +104,24 @@ jobs:
         run: |
           python -m pip install -q cibuildwheel
           python -m cibuildwheel native --output-dir dist
-          ls -lh dist
-
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.tag }}
           path: dist/*.whl
 
-  windows:
+  native-windows:
     name: native-win_amd64
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
-          location: D:\  # deterministic install root: D:\msys64
+          location: D:\
           install: >-
             git
             patch
@@ -156,25 +131,21 @@ jobs:
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-gcc-fortran
             mingw-w64-ucrt-x86_64-openblas
-
       - name: Cache ipopt build
         id: cache-ipopt
         uses: actions/cache@v4
         with:
           path: build/ipopt/stage
           key: ipopt-stage-${{ env.IPOPT_VERSION }}-win_amd64-${{ hashFiles('packaging/build_ipopt.sh') }}
-
       - name: Build ipopt
         if: steps.cache-ipopt.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: packaging/build_ipopt.sh
-
       - name: Build wheels
         shell: bash
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
-          CIBW_ARCHS_WINDOWS: AMD64  # the mingw toolchain is 64-bit only
-          # build the extension with the same mingw toolchain that built ipopt/MUMPS
+          CIBW_ARCHS_WINDOWS: AMD64
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX='${{ github.workspace }}\build\ipopt\stage'
             EXTRA_LINK_DIRS='D:\msys64\ucrt64\lib'
@@ -188,9 +159,112 @@ jobs:
         run: |
           python -m pip install -q cibuildwheel
           python -m cibuildwheel native --output-dir dist
-          ls -lh dist
-
       - uses: actions/upload-artifact@v4
         with:
           name: native-win_amd64
           path: dist/*.whl
+
+  native-sdist:
+    name: native-sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pipx run build --sdist native --outdir dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-sdist
+          path: dist/*.tar.gz
+
+  build:
+    name: build compas_sandbox
+    needs: native-linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pipx run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-manylinux_2_28_x86_64
+          path: native-dist
+      - name: Test the built wheel against the just-built native wheel
+        run: |
+          python -m venv venv-test
+          venv-test/bin/pip install -q native-dist/compas_sandbox_native-*-cp312-*.whl dist/*.whl pytest
+          cd /tmp && "$GITHUB_WORKSPACE/venv-test/bin/python" -m pytest "$GITHUB_WORKSPACE/tests" -v
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  publish-native:
+    name: publish compas_sandbox_native to PyPI
+    needs: [native-linux, native-macos, native-windows, native-sdist]
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: dist
+          merge-multiple: true
+      - run: ls -lh dist
+      # re-tagging without a native version bump republishes nothing, deliberately
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  publish:
+    name: publish compas_sandbox to PyPI
+    needs: [build, publish-native]
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: create GitHub release
+    needs: publish
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  docs:
+    name: build and deploy docs
+    needs: publish
+    if: inputs.publish
+    runs-on: macos-latest
+    permissions:
+      contents: write  # the docs action pushes the built site to the gh-pages branch
+    steps:
+      - uses: compas-dev/compas-actions.docs@v4
+        with:
+          use_conda: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
