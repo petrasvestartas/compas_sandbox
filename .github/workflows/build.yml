@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - pypi
   pull_request:
     branches:
       - main
-      - pypi
 
 jobs:
   lint:
@@ -19,16 +17,14 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
-
+      # linting needs no package install — keeping it dependency-free means a PyPI
+      # propagation delay can never fail this job
       - name: Lint
-        run: invoke lint
+        run: |
+          python -m pip install -q ruff invoke
+          invoke lint
 
-  # The test suite needs the ipopt executable, which is built and shipped by the
-  # wheels workflow. Tests therefore run there, against the installed wheel, on all
-  # five target platforms - see .github/workflows/release.yml.
+  # The test suite runs against the built wheels in release.yml (on tags) and the
+  # native wheel matrix in native.yml (on native code pushes).
