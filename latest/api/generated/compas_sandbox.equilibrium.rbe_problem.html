@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
     <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
-    <title>CRA_Assembly.number_of_interfaces &#8212; COMPAS CRA</title>
+    <title>rbe_problem &#8212; COMPAS CRA</title>
   
   
   
@@ -52,15 +52,15 @@
     <script src="../../_static/togglebutton.js"></script>
     <script src="../../_static/design-tabs.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_sandbox.datastructures.CRA_Assembly.number_of_interfaces';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_sandbox.equilibrium.rbe_problem';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/petrasvestartas/compas_sandbox/gh-pages/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.7';
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="CRA_Assembly.number_of_nodes" href="compas_sandbox.datastructures.CRA_Assembly.number_of_nodes.html" />
-    <link rel="prev" title="CRA_Assembly.number_of_edges" href="compas_sandbox.datastructures.CRA_Assembly.number_of_edges.html" />
+    <link rel="next" title="geometry" href="../compas_sandbox.geometry.html" />
+    <link rel="prev" title="cra_penalty_problem" href="compas_sandbox.equilibrium.cra_penalty_problem.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -516,9 +516,9 @@ document.write(`
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../compas_sandbox.html">compas_sandbox</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l3 current active"><a class="reference internal" href="../compas_sandbox.datastructures.html">datastructures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../compas_sandbox.datastructures.html">datastructures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../compas_sandbox.algorithms.html">algorithms</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../compas_sandbox.equilibrium.html">equilibrium</a></li>
+<li class="toctree-l3 current active"><a class="reference internal" href="../compas_sandbox.equilibrium.html">equilibrium</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../compas_sandbox.geometry.html">geometry</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../compas_sandbox.viewers.html">viewers</a></li>
 </ul>
@@ -580,9 +580,9 @@ document.write(`
     <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
     
     
-    <li class="breadcrumb-item"><a href="compas_sandbox.datastructures.CRA_Assembly.html" class="nav-link">CRA_Assembly</a></li>
+    <li class="breadcrumb-item"><a href="../compas_sandbox.equilibrium.html" class="nav-link">equilibrium</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">CRA_Assembly.number_of_interfaces</li>
+    <li class="breadcrumb-item active" aria-current="page">rbe_problem</li>
   </ul>
 </nav>
 </div>
@@ -599,19 +599,15 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="cra-assembly-number-of-interfaces">
-<h1>CRA_Assembly.number_of_interfaces</h1>
-<dl class="py method">
-<dt class="sig sig-object py" id="compas_sandbox.datastructures.CRA_Assembly.number_of_interfaces">
-<span class="sig-prename descclassname"><span class="pre">CRA_Assembly.</span></span><span class="sig-name descname"><span class="pre">number_of_interfaces</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Return the number of interfaces in the assembly.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>int</dt><dd></dd>
-</dl>
-</dd>
-</dl>
+  <section id="rbe-problem">
+<h1>rbe_problem</h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="compas_sandbox.equilibrium.rbe_problem">
+<span class="sig-prename descclassname"><span class="pre">compas_sandbox.equilibrium.</span></span><span class="sig-name descname"><span class="pre">rbe_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assembly</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.84</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Build the RBE quadratic program (paper Eq. 6) for an assembly.</p>
+<p>Variables are the penalty forces <code class="docutils literal notranslate"><span class="pre">f-tilde</span> <span class="pre">=</span> <span class="pre">[fn+,</span> <span class="pre">fn-,</span> <span class="pre">fu,</span> <span class="pre">fv]</span></code> per contact
+vertex; the constraints are linear (equilibrium and friction cone), the objective
+a diagonal quadratic with the historical component weights.</p>
 </dd></dl>
 
 </section>
@@ -637,7 +633,7 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_sandbox.datastructures.CRA_Assembly.number_of_interfaces"><code class="docutils literal notranslate"><span class="pre">CRA_Assembly.number_of_interfaces()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_sandbox.equilibrium.rbe_problem"><code class="docutils literal notranslate"><span class="pre">rbe_problem()</span></code></a></li>
 </ul>
   </nav></div>
 

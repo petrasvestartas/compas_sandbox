@@ -55,7 +55,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'knownissues';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/petrasvestartas/compas_sandbox/gh-pages/versions.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.6';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.7';
         </script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -236,7 +236,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -420,7 +420,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -587,14 +587,15 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <ul class="simple">
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">compas_sandbox</span></code> uses the <a class="reference external" href="https://coin-or.github.io/Ipopt/">IPOPT</a> solver with the
-MUMPS linear solver. Ill-conditioned assemblies can end in a non-optimal termination
-condition, which is reported as a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> by
-<code class="xref py py-func docutils literal notranslate"><span class="pre">compas_sandbox.equilibrium.pyomo_helper.pyomo_result_check()</span></code>.</p></li>
-<li><p>If <code class="docutils literal notranslate"><span class="pre">compas_sandbox</span></code> was installed from a source distribution rather than a wheel, no
-IPOPT executable is bundled and one has to be available on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> instead. Not
-having one raises <code class="docutils literal notranslate"><span class="pre">RuntimeError:</span> <span class="pre">No</span> <span class="pre">IPOPT</span> <span class="pre">executable</span> <span class="pre">found</span></code>. Installing a binary
-wheel with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">compas_sandbox</span></code> is the simplest fix.</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">compas_sandbox</span></code> uses the <a class="reference external" href="https://coin-or.github.io/Ipopt/">IPOPT</a> solver with
+the MUMPS linear solver. Ill-conditioned assemblies can end in a non-optimal
+termination condition, which is reported as a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> by the solver
+functions.</p></li>
+<li><p>The solver is provided by the <code class="docutils literal notranslate"><span class="pre">compas_sandbox_native</span></code> package, a compiled extension
+installed automatically as a dependency. If importing it fails (for example on a
+platform without prebuilt wheels), build it from source: run
+<code class="docutils literal notranslate"><span class="pre">packaging/build_ipopt.sh</span></code> and then <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">./native</span></code> — see
+<code class="docutils literal notranslate"><span class="pre">native/README.md</span></code>.</p></li>
 </ul>
 
 

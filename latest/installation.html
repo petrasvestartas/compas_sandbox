@@ -55,7 +55,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'installation';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/petrasvestartas/compas_sandbox/gh-pages/versions.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.6';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.7';
         </script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -238,7 +238,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -422,7 +422,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -596,17 +596,28 @@ document.write(`
 </pre></div>
 </div>
 <p>That is all that is needed, on Windows, macOS (Apple Silicon and Intel) and Linux.
-The wheels bundle a statically linked <a class="reference external" href="https://coin-or.github.io/Ipopt/">IPOPT</a>
-executable, so no conda environment, no homebrew and no manual download of solver
-binaries are required.</p>
+The <a class="reference external" href="https://coin-or.github.io/Ipopt/">IPOPT</a> solver is compiled into the
+<code class="docutils literal notranslate"><span class="pre">compas_sandbox_native</span></code> dependency as a Python extension module, so solving happens
+in-process: no conda environment, no homebrew and no solver executables are involved.</p>
 <p>To also install the viewers:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>compas_sandbox<span class="o">[</span>viz<span class="o">]</span>
 </pre></div>
 </div>
 <p>Verify the solver is available with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>compas-sandbox-ipopt<span class="w"> </span>--version
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import compas_sandbox_native as n; print(n.IPOPT_VERSION)"</span>
 </pre></div>
 </div>
+</section>
+<section id="rhino-8">
+<h2>Rhino 8</h2>
+<p>Start a Python 3 script in the ScriptEditor with this header and run it — Rhino
+installs everything on the first run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#! python3</span>
+<span class="c1"># venv: compas-sandbox</span>
+<span class="c1"># r: compas_sandbox</span>
+</pre></div>
+</div>
+<p>Ready-to-run examples are in the repository under <code class="docutils literal notranslate"><span class="pre">scripts/</span></code>.</p>
 </section>
 <section id="latest">
 <h2>Latest</h2>
@@ -616,24 +627,14 @@ binaries are required.</p>
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
 </pre></div>
 </div>
-<p>A source install contains no IPOPT binary, since that is added to the wheels at build
-time. Either build one with <code class="docutils literal notranslate"><span class="pre">packaging/build_ipopt.sh</span></code> (see <code class="docutils literal notranslate"><span class="pre">packaging/README.md</span></code>),
-or provide <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> yourself on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> - which is what the conda development
-environment does:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
-conda<span class="w"> </span>activate<span class="w"> </span>cra-dev
+<p>The solver extension installs from PyPI as a dependency. To build it from source
+instead (for development on the binding itself), build the static IPOPT tree first and
+then install the extension package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>packaging/build_ipopt.sh
+pip<span class="w"> </span>install<span class="w"> </span>./native
 </pre></div>
 </div>
-</section>
-<section id="conda">
-<h2>Conda</h2>
-<p>Using conda for the solver is still supported: if no bundled binary is present,
-<code class="docutils literal notranslate"><span class="pre">compas_sandbox</span></code> falls back to whatever <code class="docutils literal notranslate"><span class="pre">ipopt</span></code> is on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>cra<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10<span class="w"> </span>ipopt<span class="w"> </span>compas<span class="w"> </span>compas_viewer
-conda<span class="w"> </span>activate<span class="w"> </span>cra
-pip<span class="w"> </span>install<span class="w"> </span>compas_assembly<span class="w"> </span>compas_sandbox
-</pre></div>
-</div>
+<p>See <code class="docutils literal notranslate"><span class="pre">native/README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">packaging/README.md</span></code> for details.</p>
 </section>
 </section>
 
@@ -659,8 +660,8 @@ pip<span class="w"> </span>install<span class="w"> </span>compas_assembly<span c
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stable">Stable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rhino-8">Rhino 8</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#latest">Latest</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conda">Conda</a></li>
 </ul>
   </nav></div>
 

@@ -55,7 +55,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/compas_sandbox.equilibrium';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/petrasvestartas/compas_sandbox/gh-pages/versions.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.6';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.7';
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -238,7 +238,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -422,7 +422,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      0.6  <!-- this text may get changed later by javascript -->
+      0.7  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -601,13 +601,13 @@ document.write(`
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.cra_solve.html" title="compas_sandbox.equilibrium.cra_solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cra_solve</span></code></a></p></td>
-<td><p>CRA solver using Pyomo + IPOPT.</p></td>
+<td><p>CRA solver (paper Eq.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.cra_penalty_solve.html" title="compas_sandbox.equilibrium.cra_penalty_solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cra_penalty_solve</span></code></a></p></td>
-<td><p>CRA solver with penalty formulation using Pyomo + IPOPT.</p></td>
+<td><p>CRA penalty solver (paper Eq.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.rbe_solve.html" title="compas_sandbox.equilibrium.rbe_solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rbe_solve</span></code></a></p></td>
-<td><p>RBE solver with penalty formulation using Pyomo + IPOPT.</p></td>
+<td><p>RBE solver (paper Eq.</p></td>
 </tr>
 </tbody>
 </table>
@@ -651,30 +651,19 @@ document.write(`
 </tbody>
 </table>
 </section>
-<section id="pyomo-helper-functions">
-<h2>Pyomo Helper Functions</h2>
+<section id="problem-builders">
+<h2>Problem Builders</h2>
+<p>The optimisation problems themselves, as solver-agnostic sparse NLPs.</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.initialisations.html" title="compas_sandbox.equilibrium.initialisations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialisations</span></code></a></p></td>
-<td><p>Variable initialisations for pyomo.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.cra_problem.html" title="compas_sandbox.equilibrium.cra_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cra_problem</span></code></a></p></td>
+<td><p>Build the CRA NLP for an assembly.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.bounds.html" title="compas_sandbox.equilibrium.bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bounds</span></code></a></p></td>
-<td><p>Variable bounds for pyomo.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.cra_penalty_problem.html" title="compas_sandbox.equilibrium.cra_penalty_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cra_penalty_problem</span></code></a></p></td>
+<td><p>Build the CRA penalty problem (paper Eq.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.objectives.html" title="compas_sandbox.equilibrium.objectives"><code class="xref py py-obj docutils literal notranslate"><span class="pre">objectives</span></code></a></p></td>
-<td><p>Objective functions for pyomo.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.constraints.html" title="compas_sandbox.equilibrium.constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints</span></code></a></p></td>
-<td><p>Constraint functions for pyomo.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.static_equilibrium_constraints.html" title="compas_sandbox.equilibrium.static_equilibrium_constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_equilibrium_constraints</span></code></a></p></td>
-<td><p>Create equilibrium and friction constraints.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.pyomo_result_check.html" title="compas_sandbox.equilibrium.pyomo_result_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pyomo_result_check</span></code></a></p></td>
-<td><p>Check if pyomo optimisation result, raise error if the problem is infeasible.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.pyomo_result_assembly.html" title="compas_sandbox.equilibrium.pyomo_result_assembly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pyomo_result_assembly</span></code></a></p></td>
-<td><p>Save pyomo optimisation results to assembly.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_sandbox.equilibrium.rbe_problem.html" title="compas_sandbox.equilibrium.rbe_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rbe_problem</span></code></a></p></td>
+<td><p>Build the RBE quadratic program (paper Eq.</p></td>
 </tr>
 </tbody>
 </table>
@@ -704,7 +693,7 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solvers">Solvers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#equilibrium-helper-functions">Equilibrium Helper Functions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pyomo-helper-functions">Pyomo Helper Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-builders">Problem Builders</a></li>
 </ul>
   </nav></div>
 
