@@ -39,9 +39,12 @@ find_package(nanobind CONFIG REQUIRED)
 # answer — what numpy/scipy wheels do — is to link the shared runtime and have the
 # platform wheel-repair tool (delocate / auditwheel / delvewheel) graft it into the
 # wheel afterwards.
-find_package(PkgConfig REQUIRED)
-set(ENV{PKG_CONFIG_PATH} "${IPOPT_PREFIX}/lib/pkgconfig")
-pkg_check_modules(IPOPT REQUIRED ipopt)
+# everything needed is derivable from the stage tree itself; a pkg-config executable
+# is not reliably present on all builders (Windows in particular)
+set(IPOPT_INCLUDE_DIRS "${IPOPT_PREFIX}/include/coin-or")
+file(STRINGS "${IPOPT_PREFIX}/lib/pkgconfig/ipopt.pc" _ipopt_ver_line REGEX "^Version:")
+string(REGEX REPLACE "^Version: *" "" IPOPT_VERSION "${_ipopt_ver_line}")
+message(STATUS "IPOPT version: ${IPOPT_VERSION}")
 
 nanobind_add_module(_core src/ipopt_nb.cpp)
 

@@ -191,7 +191,8 @@ jobs:
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX='${{ github.workspace }}\build\ipopt\stage'
             EXTRA_LINK_DIRS='D:\msys64\ucrt64\lib'
-            CMAKE_ARGS='-G Ninja -DCMAKE_C_COMPILER=D:/msys64/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=D:/msys64/ucrt64/bin/g++.exe -DFORTRAN_COMPILER=D:/msys64/ucrt64/bin/gfortran.exe'
+            CMAKE_GENERATOR=Ninja
+            CMAKE_ARGS='-DCMAKE_C_COMPILER=D:/msys64/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=D:/msys64/ucrt64/bin/g++.exe -DFORTRAN_COMPILER=D:/msys64/ucrt64/bin/gfortran.exe'
           CIBW_BEFORE_BUILD: pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair --add-path D:\msys64\ucrt64\bin -w {dest_dir} {wheel}
