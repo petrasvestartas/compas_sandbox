@@ -1,6 +1,6 @@
 #! python3
 # venv: compas-sandbox
-# r: compas_sandbox>=0.7.0
+# r: compas_sandbox>=0.7.2
 """Check that the in-process IPOPT solver is available in this Python environment."""
 
 import os
