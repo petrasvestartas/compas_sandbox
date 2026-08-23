@@ -80,10 +80,11 @@ def solve(problem, options=None, verbose=False):
     # IPOPT's restoration phase can converge to a fully feasible, essentially optimal
     # point and still return Restoration_Failed because the filter refuses the step
     # back into regular mode. Judge the returned point on its merits: if it satisfies
-    # the acceptable-level tolerances, it is a solution.
+    # the acceptable-level tolerances, it is a solution. Maximum_Iterations_Exceeded is
+    # deliberately NOT in this list: an iteration-capped point is wherever the solver
+    # happened to stop, feasible or not, and the executable path fails there too.
     if status is NLPResult.FAILED and message in (
         "Restoration_Failed",
-        "Maximum_Iterations_Exceeded",
         "Search_Direction_Becomes_Too_Small",
     ):
         viol = _point_violation(problem, raw["x"], raw["g"])
