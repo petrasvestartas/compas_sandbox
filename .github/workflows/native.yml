@@ -1,9 +1,8 @@
 name: native
 
-# Builds compas_sandbox_native wheels — IPOPT bound into a Python extension — for
-# manylinux (x86_64, aarch64), macOS (arm64, Intel) and Windows, CPython 3.9–3.13.
-# IPOPT itself is compiled by packaging/build_ipopt.sh, same as for the exe wheels,
-# but with PIC objects so the static archives can link into a shared module.
+# Build-only CI for the compas_sandbox_native wheels: validates native code changes
+# on push. Publishing happens exclusively in release.yml, which builds the same
+# matrix in order (natives first, then the pure package) on v* tags.
 
 on:
   push:
@@ -13,7 +12,6 @@ on:
       - "src/compas_sandbox/nlp/**"
       - "packaging/build_ipopt.sh"
       - ".github/workflows/native.yml"
-    tags: ["v*"]
   workflow_dispatch:
 
 env:
@@ -196,39 +194,3 @@ jobs:
         with:
           name: native-win_amd64
           path: dist/*.whl
-
-  sdist:
-    name: native-sdist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pipx run build --sdist native --outdir dist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: native-sdist
-          path: dist/*.tar.gz
-
-  publish:
-    name: publish to PyPI
-    needs: [linux, macos, windows, sdist]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-    permissions:
-      id-token: write  # required for trusted publishing
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: native-*
-          path: dist
-          merge-multiple: true
-      - run: ls -lh dist
-      # the native package version is independent of compas_sandbox releases, so a tag
-      # that does not bump native/pyproject.toml must not fail on re-upload
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
