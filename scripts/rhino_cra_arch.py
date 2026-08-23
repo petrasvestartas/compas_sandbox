@@ -16,6 +16,7 @@ DEPTH = 0.5
 NUM_BLOCKS = 20
 MU = 0.7  # friction coefficient
 FORCE_SCALE = 0.5
+FORCE_RADIUS = 0.05  # pipe radius of the drawn force lines
 
 assembly = Arch(
     height=HEIGHT,
@@ -73,7 +74,10 @@ for edge in assembly.graph.edges():
         pos = [sum(c[i] * n for c, n in zip(corners, normals)) / sum_n for i in range(3)]
         f = (w * sum_n + u * sum_u + v * sum_v) * 0.5 * FORCE_SCALE
         layer = compression_layer if sum_n >= 0 else tension_layer
-        rs.ObjectLayer(rs.AddLine([pos[i] + f[i] for i in range(3)], [pos[i] - f[i] for i in range(3)]), layer)
+        line = rs.AddLine([pos[i] + f[i] for i in range(3)], [pos[i] - f[i] for i in range(3)])
+        pipe = rs.AddPipe(line, 0, FORCE_RADIUS, cap=1)
+        rs.DeleteObject(line)
+        rs.ObjectLayer(pipe, layer)
         rs.ObjectLayer(rs.AddTextDot("{:.2f}".format(abs(sum_n)), pos), layer)
 
 rs.EnableRedraw(True)
