@@ -1,6 +1,6 @@
 #! python3
 # venv: compas-sandbox
-# r: compas_sandbox
+# r: compas_sandbox>=0.7.0
 """Three stacked cubes: CRA equilibrium, baked into the Rhino document."""
 
 import os
