@@ -127,7 +127,11 @@ jobs:
       - name: Build wheels
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
-          CIBW_ENVIRONMENT: IPOPT_PREFIX=${{ github.workspace }}/build/ipopt/stage
+          # the bundled Homebrew libgfortran targets the runner's macOS, so the wheel
+          # has to as well — these wheels need macOS 15+
+          CIBW_ENVIRONMENT: >-
+            IPOPT_PREFIX=${{ github.workspace }}/build/ipopt/stage
+            MACOSX_DEPLOYMENT_TARGET=15.0
           CIBW_TEST_REQUIRES: numpy
           CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |
@@ -181,6 +185,7 @@ jobs:
         shell: bash
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+          CIBW_ARCHS_WINDOWS: AMD64  # the mingw toolchain is 64-bit only
           # build the extension with the same mingw toolchain that built ipopt/MUMPS
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX='${{ github.workspace }}\build\ipopt\stage'
