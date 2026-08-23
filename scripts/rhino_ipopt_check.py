@@ -26,3 +26,11 @@ bindir = os.path.join(os.path.dirname(compas_sandbox.__file__), "_ipopt", "bin")
 print("bin dir:", os.listdir(bindir) if os.path.isdir(bindir) else "MISSING")
 print("bundled:", bundled())
 print("ipopt says:", ipopt_version())
+
+# the in-process solver (no executable at all) — preferred when installed
+try:
+    import compas_sandbox_native
+
+    print("native binding: OK, IPOPT", compas_sandbox_native.IPOPT_VERSION)
+except ImportError as e:
+    print("native binding: not installed ({})".format(e))

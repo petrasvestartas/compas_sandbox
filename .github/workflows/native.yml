@@ -91,10 +91,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
+          # macos-14: Homebrew's libgfortran bottle there targets macOS 14, so the
+          # wheels reach macOS 14+ instead of 15+
+          - os: macos-14
             tag: macosx_arm64
+            deployment_target: "14.0"
           - os: macos-15-intel
             tag: macosx_x86_64
+            deployment_target: "15.0"
 
     steps:
       - uses: actions/checkout@v4
@@ -128,10 +132,10 @@ jobs:
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           # the bundled Homebrew libgfortran targets the runner's macOS, so the wheel
-          # has to as well — these wheels need macOS 15+
+          # has to as well
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX=${{ github.workspace }}/build/ipopt/stage
-            MACOSX_DEPLOYMENT_TARGET=15.0
+            MACOSX_DEPLOYMENT_TARGET=${{ matrix.deployment_target }}
           CIBW_TEST_REQUIRES: numpy
           CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |

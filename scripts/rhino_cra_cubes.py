@@ -1,12 +1,16 @@
 #! python3
 # venv: compas-sandbox
 # r: compas_sandbox
+# r: compas_sandbox_native
 """CRA equilibrium of three stacked cubes, drawn in the Rhino document.
 
 Open Rhino 8 -> ScriptEditor (Python 3) -> paste/open this file -> Run.
 
+Solves with compas_sandbox_native: IPOPT compiled into a Python extension module, so
+there is no ipopt executable involved at all (nothing for antivirus to quarantine).
+
 Draws:
-- free blocks (gray) and support blocks (orange)
+- free blocks (black wireframe) and support blocks (orange)
 - contact interfaces (blue polylines)
 - resultant contact forces: green = compression, red = tension
 """
@@ -19,7 +23,7 @@ import rhinoscriptsyntax as rs
 import compas_sandbox
 from compas_sandbox.algorithms import assembly_interfaces_numpy
 from compas_sandbox.datastructures import CRA_Assembly
-from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.equilibrium import cra_solve_native
 
 FORCE_SCALE = 0.5
 
@@ -32,7 +36,7 @@ assembly = assembly.copy(cls=CRA_Assembly)
 assembly.set_boundary_conditions([0])  # node 0 is the support
 
 assembly_interfaces_numpy(assembly, nmax=10, amin=1e-2, tmax=1e-2)
-cra_solve(assembly, verbose=True, timer=True)
+cra_solve_native(assembly, verbose=True, timer=True)
 
 # ----------------------------------------------------------------------------
 # draw into the Rhino document

@@ -1,7 +1,11 @@
 #! python3
 # venv: compas-sandbox
 # r: compas_sandbox
+# r: compas_sandbox_native
 """CRA equilibrium of a parametric masonry arch, drawn in the Rhino document.
+
+Solves with compas_sandbox_native: IPOPT compiled into a Python extension module, so
+there is no ipopt executable involved at all (nothing for antivirus to quarantine).
 
 Open Rhino 8 -> ScriptEditor (Python 3) -> open this file -> Run.
 
@@ -15,7 +19,7 @@ Draws:
 import rhinoscriptsyntax as rs
 
 from compas_sandbox.algorithms import assembly_interfaces_numpy
-from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.equilibrium import cra_solve_native
 from compas_sandbox.geometry import Arch
 
 # ----------------------------------------------------------------------------
@@ -44,7 +48,7 @@ assembly = Arch(
 ).assembly()
 
 assembly_interfaces_numpy(assembly, nmax=10, amin=1e-2, tmax=1e-2)
-cra_solve(assembly, mu=MU, verbose=True, timer=True)
+cra_solve_native(assembly, mu=MU, verbose=True, timer=True)
 
 # ----------------------------------------------------------------------------
 # draw into the Rhino document
