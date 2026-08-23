@@ -25,6 +25,43 @@ it is built and which licenses apply, and the
 [installation docs](https://github.com/petrasvestartas/compas_sandbox/latest/installation.html)
 for development installs.
 
+### Rhino 8
+
+The easiest way is to let the ScriptEditor install everything for you. Start a new
+Python 3 script with this header and run it — on the first run Rhino installs
+`compas_sandbox` and all of its dependencies into its own environment (this takes a
+couple of minutes, watch the progress in the ScriptEditor console):
+
+```python
+#! python3
+# venv: compas-sandbox
+# r: compas_sandbox
+```
+
+No extra `# r:` lines are needed for `compas`, `numpy`, `shapely`, etc. — they are
+dependencies of `compas_sandbox` and pip installs them automatically. The bundled IPOPT
+executable works inside Rhino as well, so no conda or manual solver install is needed.
+
+Ready-to-run examples for the ScriptEditor are in [`scripts/`](./scripts):
+
+- [`scripts/rhino_cra_cubes.py`](./scripts/rhino_cra_cubes.py) — three stacked cubes,
+  baked as wireframe blocks with interface outlines and resultant contact forces.
+- [`scripts/rhino_cra_arch.py`](./scripts/rhino_cra_arch.py) — a parametric masonry
+  arch (span, rise, thickness, number of voussoirs, friction) solved and baked the
+  same way.
+
+Alternatively, install manually into Rhino's Python with the shell that ships with
+Rhino (`Tools > Options > Plugins > Rhino Code > Open Shell`, or
+`~/.rhinocode/py39-rh8/shell/open-shell` on macOS):
+
+```bash
+pip install compas_sandbox
+```
+
+Note that Rhino 8 ships CPython 3.9: `compas_sandbox` supports it since version 0.6.2,
+and pip automatically selects dependency versions that still support 3.9 (for example
+`pyomo` 6.9.x rather than 6.10+).
+
 To find out more about CRA, please refer to our paper in the CAD Computer-Aided Design journal:
 [https://doi.org/10.1016/j.cad.2022.103216](https://doi.org/10.1016/j.cad.2022.103216 )
 
