@@ -1,0 +1,26 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.2"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "compas_sandbox_native"
+version = "0.1.0"
+description = "In-process IPOPT solver for compas_sandbox (nanobind binding, statically linked)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "EPL-2.0" }
+dependencies = ["numpy>=1.24"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/petrasvestartas/compas_sandbox"
+
+[tool.scikit-build]
+minimum-version = "0.10"
+wheel.packages = ["python/compas_sandbox_native"]
+# stripping would invalidate the macOS ad-hoc code signature; arm64 kills unsigned code
+install.strip = false
