@@ -70,6 +70,7 @@ const char *status_name(Ipopt::ApplicationReturnStatus s) {
         case S::Restoration_Failed: return "Restoration_Failed";
         case S::Error_In_Step_Computation: return "Error_In_Step_Computation";
         case S::Maximum_CpuTime_Exceeded: return "Maximum_CpuTime_Exceeded";
+        case S::Maximum_WallTime_Exceeded: return "Maximum_WallTime_Exceeded";
         case S::Not_Enough_Degrees_Of_Freedom: return "Not_Enough_Degrees_Of_Freedom";
         case S::Invalid_Problem_Definition: return "Invalid_Problem_Definition";
         case S::Invalid_Option: return "Invalid_Option";
@@ -229,6 +230,18 @@ nb::dict solve_nlp(int n, int m, DArray x_l, DArray x_u, DArray g_l, DArray g_u,
     if (jac_rows.size() != jac_cols.size())
         throw std::invalid_argument("jac_rows and jac_cols must have the same length");
 
+    // IPOPT indexes its matrices with these values without any bounds checking of its
+    // own, so an out-of-range entry coming from Python would corrupt memory
+    auto check_indices = [](const IArray &idx, int limit, const char *what) {
+        for (size_t k = 0; k < idx.size(); ++k)
+            if (idx.data()[k] < 0 || idx.data()[k] >= limit)
+                throw std::invalid_argument(std::string(what) + "[" + std::to_string(k) + "] = " +
+                                            std::to_string(idx.data()[k]) + " is out of range [0, " +
+                                            std::to_string(limit) + ")");
+    };
+    check_indices(jac_rows, m, "jac_rows");
+    check_indices(jac_cols, n, "jac_cols");
+
     Ipopt::SmartPtr<CallbackNLP> nlp = new CallbackNLP();
     nlp->n_ = n;
     nlp->m_ = m;
@@ -249,6 +262,8 @@ nb::dict solve_nlp(int n, int m, DArray x_l, DArray x_u, DArray g_l, DArray g_u,
         IArray hc = nb::cast<IArray>(hess_cols);
         if (hr.size() != hc.size())
             throw std::invalid_argument("hess_rows and hess_cols must have the same length");
+        check_indices(hr, n, "hess_rows");
+        check_indices(hc, n, "hess_cols");
         nlp->hess_rows_ = to_vector_i(hr);
         nlp->hess_cols_ = to_vector_i(hc);
         nlp->eval_h_ = eval_h;
@@ -274,12 +289,18 @@ nb::dict solve_nlp(int n, int m, DArray x_l, DArray x_u, DArray g_l, DArray g_u,
         }
     }
 
+    // without a Hessian callback IPOPT must run quasi-Newton, or it aborts at startup
+    if (!nlp->have_hess_)
+        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+
     Ipopt::ApplicationReturnStatus status = app->Initialize();
     if (status == Ipopt::Solve_Succeeded)
         status = app->OptimizeTNLP(Ipopt::SmartPtr<Ipopt::TNLP>(Ipopt::GetRawPtr(nlp)));
 
-    // a Python exception inside a callback beats whatever IPOPT made of the failure
-    if (nlp->error_)
+    // A failed evaluation is recoverable for IPOPT (it cuts the step and retries), so a
+    // captured Python exception only surfaces when the solve actually failed — a solve
+    // that converged despite a transient callback error keeps its solution.
+    if (nlp->error_ && status != Ipopt::Solve_Succeeded && status != Ipopt::Solved_To_Acceptable_Level)
         std::rethrow_exception(nlp->error_);
 
     nb::dict out;

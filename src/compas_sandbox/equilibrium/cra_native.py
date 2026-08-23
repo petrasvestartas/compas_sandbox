@@ -64,10 +64,10 @@ def _result_to_assembly(x, layout, assembly, verbose=False):
             for i in range(len(interface.points)):
                 interface.forces.append(
                     {
-                        "c_np": f[offset + 3 * i + 0],
+                        "c_np": float(f[offset + 3 * i + 0]),
                         "c_nn": 0,
-                        "c_u": f[offset + 3 * i + 1],
-                        "c_v": f[offset + 3 * i + 2],
+                        "c_u": float(f[offset + 3 * i + 1]),
+                        "c_v": float(f[offset + 3 * i + 2]),
                     }
                 )
             offset += 3 * len(interface.points)
@@ -78,5 +78,5 @@ def _result_to_assembly(x, layout, assembly, verbose=False):
     for node in assembly.graph.nodes():
         if assembly.graph.node_attribute(node, "is_support"):
             continue
-        assembly.graph.node_attribute(node, "displacement", list(q[offset : offset + 6]))
+        assembly.graph.node_attribute(node, "displacement", [float(v) for v in q[offset : offset + 6]])
         offset += 6
