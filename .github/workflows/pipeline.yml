@@ -257,14 +257,35 @@ jobs:
           files: dist/*
 
   docs:
-    name: build and deploy docs
-    needs: publish
-    if: inputs.publish
-    runs-on: macos-latest
+    name: docs
+    needs: build
+    runs-on: ubuntu-latest
     permissions:
-      contents: write  # the docs action pushes the built site to the gh-pages branch
+      contents: write  # deploying pushes the built site to the gh-pages branch
     steps:
-      - uses: compas-dev/compas-actions.docs@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          use_conda: true
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-manylinux_2_28_x86_64
+          path: native-dist
+      # PyPI-only install; the solver comes from this run's own artifacts, so the
+      # docs build never depends on PyPI propagation state
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1
+          python -m pip install -q --upgrade pip
+          python -m pip install -q native-dist/compas_sandbox_native-*-cp312-*.whl
+          python -m pip install -q -e ".[dev]"
+      - name: Build docs
+        run: |
+          invoke docs
+          test -f dist/docs/index.html
+      - name: Deploy docs
+        if: inputs.publish
+        uses: peaceiris/actions-gh-pages@v4
+        with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist/docs
