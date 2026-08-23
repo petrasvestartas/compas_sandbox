@@ -1,16 +1,15 @@
 ********************************************************************************
-viewers
+algorithms
 ********************************************************************************
 
-.. currentmodule:: compas_cra.viewers
+.. currentmodule:: compas_sandbox.algorithms
 
 
-CRA Viewer
-==========
+Functions
+============
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    cra_view
-    cra_view_ex
+    assembly_interfaces_numpy

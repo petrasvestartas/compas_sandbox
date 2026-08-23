@@ -9,7 +9,7 @@ Stable
 
 .. code-block:: bash
 
-    pip install compas_cra
+    pip install compas_sandbox
 
 That is all that is needed, on Windows, macOS (Apple Silicon and Intel) and Linux.
 The wheels bundle a statically linked `IPOPT <https://coin-or.github.io/Ipopt/>`_
@@ -20,13 +20,13 @@ To also install the viewers:
 
 .. code-block:: bash
 
-    pip install compas_cra[viz]
+    pip install compas_sandbox[viz]
 
 Verify the solver is available with:
 
 .. code-block:: bash
 
-    compas-cra-ipopt --version
+    compas-sandbox-ipopt --version
 
 
 Latest
@@ -36,8 +36,8 @@ The latest version can be installed from local source.
 
 .. code-block:: bash
 
-    git clone https://github.com/blockresearchgroup/compas_cra.git
-    cd compas_cra
+    git clone https://github.com/petrasvestartas/compas_sandbox.git
+    cd compas_sandbox
     pip install -e ".[dev]"
 
 A source install contains no IPOPT binary, since that is added to the wheels at build
@@ -55,10 +55,10 @@ Conda
 =====
 
 Using conda for the solver is still supported: if no bundled binary is present,
-``compas_cra`` falls back to whatever ``ipopt`` is on the ``PATH``.
+``compas_sandbox`` falls back to whatever ``ipopt`` is on the ``PATH``.
 
 .. code-block:: bash
 
     conda create -n cra -c conda-forge python=3.10 ipopt compas compas_viewer
     conda activate cra
-    pip install compas_assembly compas_cra
+    pip install compas_assembly compas_sandbox

@@ -31,4 +31,4 @@ jobs:
 
   # The test suite needs the ipopt executable, which is built and shipped by the
   # wheels workflow. Tests therefore run there, against the installed wheel, on all
-  # five target platforms - see .github/workflows/wheels.yml.
+  # five target platforms - see .github/workflows/release.yml.

@@ -1,9 +1,9 @@
 import pyomo.environ as pyo
 import pytest
 
-from compas_cra._ipopt import executable
-from compas_cra._ipopt import ipopt_version
-from compas_cra.equilibrium._solver import ipopt_solver
+from compas_sandbox._ipopt import executable
+from compas_sandbox._ipopt import ipopt_version
+from compas_sandbox.equilibrium._solver import ipopt_solver
 
 
 def test_ipopt_executable_is_available():

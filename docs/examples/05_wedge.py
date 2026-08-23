@@ -5,17 +5,17 @@ import os
 
 import compas
 
-import compas_cra
-from compas_cra.algorithms import assembly_interfaces_numpy
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
-from compas_cra.viewers import cra_view
+import compas_sandbox
+from compas_sandbox.algorithms import assembly_interfaces_numpy
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.viewers import cra_view
 
 mu = 0.84  # friction coefficient
 deg = 90  # rotation in degree
 axis = "y-axis"  # y-axis, x-axis, xy30-axis
 
-FILE_I = os.path.join(compas_cra.SAMPLE, "type-b.json")
+FILE_I = os.path.join(compas_sandbox.SAMPLE, "type-b.json")
 
 rotate_axis = [0, 1, 0]
 if axis == "y-axis":

@@ -58,7 +58,7 @@ Please cite our work if you use CRA in your research
 
 .. code-block:: latex
 
-    @misc{compas-cra,
+    @misc{compas-sandbox,
         title  = {{COMPAS CRA}: Coupled Rigid-Block Analysis ({CRA}) for the {COMPAS} framework},
         author = {Kao, Gene Ting-Chun},
         note   = {https://github.com/BlockResearchGroup/compas\_cra},

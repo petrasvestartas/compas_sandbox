@@ -36,7 +36,7 @@ Add them to assembly data structure.
 .. code-block:: python
 
     from compas_assembly.datastructures import Block
-    from compas_cra.datastructures import CRA_Assembly
+    from compas_sandbox.datastructures import CRA_Assembly
 
     assembly = CRA_Assembly()
     assembly.add_block(Block.from_shape(support), node=0)
@@ -68,7 +68,7 @@ Then we identify planar interfaces between blocks automatically.
 
 .. code-block:: python
 
-    from compas_cra.algorithms import assembly_interfaces_numpy
+    from compas_sandbox.algorithms import assembly_interfaces_numpy
     assembly_interfaces_numpy(assembly)
 
 .. figure:: /_images/tutorial_cubes_3.png
@@ -78,15 +78,15 @@ Then we identify planar interfaces between blocks automatically.
 5. Solving equilibrium
 ----------------------
 
-:mod:`compas_cra` provides three solvers:
+:mod:`compas_sandbox` provides three solvers:
 
-- RBE Solve: :mod:`compas_cra.equilibrium.rbe_solve`.
-- CRA Solve: :mod:`compas_cra.equilibrium.cra_solve`.
-- CRA Penalty Solve: :mod:`compas_cra.equilibrium.cra_penalty_solve`.
+- RBE Solve: :mod:`compas_sandbox.equilibrium.rbe_solve`.
+- CRA Solve: :mod:`compas_sandbox.equilibrium.cra_solve`.
+- CRA Penalty Solve: :mod:`compas_sandbox.equilibrium.cra_penalty_solve`.
 
 .. code-block:: python
 
-    from compas_cra.equilibrium import cra_solve
+    from compas_sandbox.equilibrium import cra_solve
     cra_solve(assembly, verbose=True, timer=True)
 
 6. Visualisation
@@ -94,7 +94,7 @@ Then we identify planar interfaces between blocks automatically.
 
 .. code-block:: python
 
-    from compas_cra.viewers import cra_view
+    from compas_sandbox.viewers import cra_view
     cra_view(assembly, resultant=False, nodal=True, grid=True)
 
 .. figure:: /_images/tutorial_cubes_4.png
@@ -102,7 +102,7 @@ Then we identify planar interfaces between blocks automatically.
     :class: figure-img img-fluid
 
 The complete tutorial script can be downloaded from
-`scripts/tutorial_cubes.py <https://github.com/BlockResearchGroup/compas_cra/blob/main/scripts/tutorial_cubes.py>`_
+`scripts/tutorial_cubes.py <https://github.com/petrasvestartas/compas_sandbox/blob/main/scripts/tutorial_cubes.py>`_
 
 To reproduce our `paper <https://doi.org/10.1016/j.cad.2022.103216>`_'s examples
 or to see more how to construct assembly and solve equilibrium,
@@ -119,7 +119,7 @@ Here we use Rhino as an example.
 Export mesh blocks as Assembly json file
 ----------------------------------------
 
-Use this script at `scripts/mesh_to_assembly_json.py <https://github.com/BlockResearchGroup/compas_cra/blob/main/scripts/mesh_to_assembly_json.py>`_
+Use this script at `scripts/mesh_to_assembly_json.py <https://github.com/petrasvestartas/compas_sandbox/blob/main/scripts/mesh_to_assembly_json.py>`_
 to select Rhino mesh blocks and export to assembly data structure as a ``.json`` file.
 
 .. literalinclude:: ../scripts/mesh_to_assembly_json.py
@@ -133,15 +133,15 @@ Then we can load the ``.json`` file from local path.
 
     import os
     import compas
-    import compas_cra
+    import compas_sandbox
 
-    from compas_cra.datastructures import CRA_Assembly
+    from compas_sandbox.datastructures import CRA_Assembly
 
-    FILE_I = os.path.join(compas_cra.DATA, "XXX.json")  # or your own path
+    FILE_I = os.path.join(compas_sandbox.DATA, "XXX.json")  # or your own path
     assembly = compas.json_load(FILE_I)
     assembly = assembly.copy(cls=CRA_Assembly)
 
-After loading the ``.json`` file and convert it to :mod:`compas_cra.datastructures.CRA_Assembly`,
+After loading the ``.json`` file and convert it to :mod:`compas_sandbox.datastructures.CRA_Assembly`,
 we can follow the previous step :ref:`BC` for the analysis.
 
 Export mesh blocks and interfaces as Assembly json file
@@ -150,7 +150,7 @@ Export mesh blocks and interfaces as Assembly json file
 Currently, we do not implement automatic interface detection algorithm for blocks with curve/free-form interfaces,
 so they have to be discretised manually as planar faces or triangles.
 
-Use this script at `scripts/mesh_to_assembly_interfaces_json.py <https://github.com/BlockResearchGroup/compas_cra/blob/main/scripts/mesh_to_assembly_interfaces_json.py>`_
+Use this script at `scripts/mesh_to_assembly_interfaces_json.py <https://github.com/petrasvestartas/compas_sandbox/blob/main/scripts/mesh_to_assembly_interfaces_json.py>`_
 to select mesh blocks with interfaces and export to assembly data structure and store it as json file.
 
 .. literalinclude:: ../scripts/mesh_to_assembly_interfaces_json.py
@@ -170,7 +170,7 @@ to select mesh blocks with interfaces and export to assembly data structure and 
      - .. image:: /_images/tutorial_interface2.png
           :width: 100 %
 
-More Rhino files and precomputed :code:`.json` files are located at `data <https://github.com/BlockResearchGroup/compas_cra/blob/main/data>`_ folder.
+More Rhino files and precomputed :code:`.json` files are located at `data <https://github.com/petrasvestartas/compas_sandbox/blob/main/data>`_ folder.
 
 **Note**:
 

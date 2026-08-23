@@ -6,9 +6,9 @@ from compas.geometry import Frame
 from compas.geometry import Translation
 from compas_assembly.datastructures import Block
 
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
-from compas_cra.viewers import cra_view
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.viewers import cra_view
 
 deg = 20  # rotation angle in degree
 rotate_axis = [0, 1, 0]  # around y-axis

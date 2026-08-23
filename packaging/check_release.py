@@ -67,7 +67,7 @@ def check(dist):
             binaries = [
                 i
                 for i in zf.infolist()
-                if i.filename in ("compas_cra/_ipopt/bin/ipopt", "compas_cra/_ipopt/bin/ipopt.exe")
+                if i.filename in ("compas_sandbox/_ipopt/bin/ipopt", "compas_sandbox/_ipopt/bin/ipopt.exe")
             ]
             if not binaries:
                 problems.append("%s contains no ipopt executable" % wheel.name)

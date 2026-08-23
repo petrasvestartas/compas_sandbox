@@ -32,7 +32,7 @@ fi
 "$VBIN/python" -m pip install -q "$WHEEL" pytest
 
 echo "--- the console script resolves the solver"
-"$VBIN/compas-cra-ipopt" --version
+"$VBIN/compas-sandbox-ipopt" --version
 
 echo '--- and it installs no command named ipopt, which would shadow a real solver'
 if [ -e "$VBIN/ipopt" ] || [ -e "$VBIN/ipopt.exe" ]; then
@@ -43,7 +43,7 @@ fi
 
 echo "--- the bundled executable is found from Python"
 "$VBIN/python" -c "
-from compas_cra._ipopt import bundled, executable, ipopt_version
+from compas_sandbox._ipopt import bundled, executable, ipopt_version
 assert bundled() is not None, 'the wheel does not contain an ipopt executable'
 print(executable())
 print(ipopt_version())

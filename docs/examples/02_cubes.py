@@ -4,13 +4,13 @@ import os
 
 import compas
 
-import compas_cra
-from compas_cra.algorithms import assembly_interfaces_numpy
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
-from compas_cra.viewers import cra_view
+import compas_sandbox
+from compas_sandbox.algorithms import assembly_interfaces_numpy
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.viewers import cra_view
 
-FILE_I = os.path.join(compas_cra.SAMPLE, "cubes.json")
+FILE_I = os.path.join(compas_sandbox.SAMPLE, "cubes.json")
 
 assembly = compas.json_load(FILE_I)
 assembly: CRA_Assembly = assembly.copy(cls=CRA_Assembly)

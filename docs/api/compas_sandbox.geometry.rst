@@ -2,7 +2,7 @@
 geometry
 ********************************************************************************
 
-.. currentmodule:: compas_cra.geometry
+.. currentmodule:: compas_sandbox.geometry
 
 
 Classes

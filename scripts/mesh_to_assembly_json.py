@@ -5,7 +5,7 @@ import compas
 import rhinoscriptsyntax as rs
 
 from compas_rhino import select_meshes
-from compas_cra.datastructures import CRA_Assembly
+from compas_sandbox.datastructures import CRA_Assembly
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 PATH = os.path.abspath(

@@ -8,8 +8,8 @@ import sphinx_compas2_theme
 
 project = "COMPAS CRA"
 copyright = "ETH Zurich - Block Research Group"
-package = "compas_cra"
-organization = "blockresearchgroup"
+package = "compas_sandbox"
+organization = "petrasvestartas"
 
 master_doc = "index"
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}

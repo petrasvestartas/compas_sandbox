@@ -4,14 +4,14 @@ import os
 
 import compas
 
-import compas_cra
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
-from compas_cra.viewers import cra_view
+import compas_sandbox
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.viewers import cra_view
 
 density = 0.1
 
-FILE_I = os.path.join(compas_cra.SAMPLE, "cube-curve-short.json")
+FILE_I = os.path.join(compas_sandbox.SAMPLE, "cube-curve-short.json")
 
 assembly = compas.json_load(FILE_I)
 assembly: CRA_Assembly = assembly.copy(cls=CRA_Assembly)

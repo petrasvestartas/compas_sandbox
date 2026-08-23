@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # ============================================================================
 
 [project]
-name = "compas_cra"
+name = "compas_sandbox"
 description = ""
 keywords = []
 authors = [{ name = "Gene Ting-Chun Kao", email = "kao@arch.ethz.ch" }]
@@ -30,17 +30,17 @@ classifiers = [
 ]
 
 # The platform wheels bundle an ipopt executable (see packaging/build_ipopt.sh), which
-# is what makes `pip install compas_cra` enough to actually solve something. The command
+# is what makes `pip install compas_sandbox` enough to actually solve something. The command
 # is deliberately not called `ipopt`: pip would install it over a conda environment's own
-# bin/ipopt, and compas_cra would then find its own wrapper instead of a real solver.
+# bin/ipopt, and compas_sandbox would then find its own wrapper instead of a real solver.
 [project.scripts]
-compas-cra-ipopt = "compas_cra._ipopt.__main__:main"
+compas-sandbox-ipopt = "compas_sandbox._ipopt.__main__:main"
 
 [project.urls]
-Homepage = "https://blockresearchgroup.github.io/compas_cra"
-Documentation = "https://blockresearchgroup.github.io/compas_cra"
-Repository = "https://github.com/blockresearchgroup/compas_cra.git"
-Changelog = "https://github.com/blockresearchgroup/compas_cra/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/petrasvestartas/compas_sandbox"
+Documentation = "https://github.com/petrasvestartas/compas_sandbox"
+Repository = "https://github.com/petrasvestartas/compas_sandbox.git"
+Changelog = "https://github.com/petrasvestartas/compas_sandbox/blob/main/CHANGELOG.md"
 
 # ============================================================================
 # setuptools config
@@ -52,7 +52,7 @@ include-package-data = true
 zip-safe = false
 
 [tool.setuptools.dynamic]
-version = { attr = "compas_cra.__version__" }
+version = { attr = "compas_sandbox.__version__" }
 dependencies = { file = "requirements.txt" }
 optional-dependencies = { dev = { file = "requirements-dev.txt" }, viz = { file = "requirements-viz.txt" } }
 
@@ -60,9 +60,9 @@ optional-dependencies = { dev = { file = "requirements-dev.txt" }, viz = { file 
 where = ["src"]
 
 [tool.setuptools.package-data]
-"compas_cra._ipopt" = ["bin/*", "licenses/*"]
+"compas_sandbox._ipopt" = ["bin/*", "licenses/*"]
 # data/ is not a package, so it needs an explicit glob to end up in the wheel
-"compas_cra" = ["data/samples/*.json"]
+"compas_sandbox" = ["data/samples/*.json"]
 
 # ============================================================================
 # replace pytest.ini
@@ -70,7 +70,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-testpaths = ["tests", "src/compas_cra"]
+testpaths = ["tests", "src/compas_sandbox"]
 python_files = ["test_*.py", "*_test.py", "test.py"]
 addopts = ["-ra", "--strict-markers", "--doctest-glob=*.rst", "--tb=short"]
 doctest_optionflags = [
@@ -92,7 +92,7 @@ commit = true
 tag = true
 
 [[tool.bumpversion.files]]
-filename = "src/compas_cra/__init__.py"
+filename = "src/compas_sandbox/__init__.py"
 search = "{current_version}"
 replace = "{new_version}"
 

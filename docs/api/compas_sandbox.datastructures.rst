@@ -2,7 +2,7 @@
 datastructures
 ********************************************************************************
 
-.. currentmodule:: compas_cra.datastructures
+.. currentmodule:: compas_sandbox.datastructures
 
 
 Classes

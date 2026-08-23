@@ -2,7 +2,7 @@
 equilibrium
 ********************************************************************************
 
-.. currentmodule:: compas_cra.equilibrium
+.. currentmodule:: compas_sandbox.equilibrium
 
 
 Solvers

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Build a self-contained `ipopt` executable for the current platform and stage it
-# into src/compas_cra/_ipopt/bin/.
+# into src/compas_sandbox/_ipopt/bin/.
 #
 # COMPAS CRA reaches IPOPT exclusively through `pyomo.SolverFactory("ipopt")`, which
 # shells out to the IPOPT command line executable (the AMPL/.nl interface). So all we
@@ -27,7 +27,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/.." && pwd)"
 WORK_DIR="${WORK_DIR:-$REPO_ROOT/build/ipopt}"
 STAGE_DIR="$WORK_DIR/stage"
-DEST_DIR="${DEST_DIR:-$REPO_ROOT/src/compas_cra/_ipopt/bin}"
+DEST_DIR="${DEST_DIR:-$REPO_ROOT/src/compas_sandbox/_ipopt/bin}"
 JOBS="${JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)}"
 
 case "$(uname -s)" in
@@ -260,7 +260,7 @@ collect_licenses() {
     done
     cat > "$dest/README.txt" <<EOF
 The ipopt executable shipped in ../bin was built from source by
-packaging/build_ipopt.sh in the compas_cra repository.
+packaging/build_ipopt.sh in the compas_sandbox repository.
 
     IPOPT     $IPOPT_VERSION   Eclipse Public License 2.0    https://github.com/coin-or/Ipopt
     MUMPS               linear solver, permissive     https://mumps-solver.org

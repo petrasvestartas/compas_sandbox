@@ -8,7 +8,7 @@ from compas.geometry import subtract_vectors
 from compas.geometry import transform_points
 from compas_assembly.datastructures import Block
 
-from compas_cra.datastructures import CRA_Assembly
+from compas_sandbox.datastructures import CRA_Assembly
 
 
 class Arch(object):

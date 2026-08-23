@@ -22,7 +22,7 @@ case "$(uname -s)" in
     *)                    EXE_NAME=ipopt ;;
 esac
 
-BINARY="src/compas_cra/_ipopt/bin/$EXE_NAME"
+BINARY="src/compas_sandbox/_ipopt/bin/$EXE_NAME"
 if [ ! -f "$BINARY" ]; then
     echo "ERROR: $BINARY is missing - run packaging/build_ipopt.sh first" >&2
     exit 1

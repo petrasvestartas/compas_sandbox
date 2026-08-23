@@ -1,11 +1,11 @@
 # Packaging
 
-`compas_cra` solves its models with [pyomo](https://pyomo.readthedocs.io), which drives
+`compas_sandbox` solves its models with [pyomo](https://pyomo.readthedocs.io), which drives
 [IPOPT](https://coin-or.github.io/Ipopt/) through the AMPL `.nl` file interface: it
 shells out to the `ipopt` **command line executable** rather than linking against the
 library. That executable has never been installable with pip - `cyipopt` publishes an
 sdist only and needs a system IPOPT to compile against, and coin-or's own releases carry
-Windows binaries only - which is why installing `compas_cra` used to require conda, plus
+Windows binaries only - which is why installing `compas_sandbox` used to require conda, plus
 a manual download and copy of solver binaries on Windows.
 
 These scripts remove that requirement by building `ipopt` from source in CI and shipping
@@ -26,7 +26,7 @@ platform serves every supported Python version**:
 
 | script | what it does |
 | --- | --- |
-| `build_ipopt.sh` | builds `ipopt` with coinbrew and stages it into `src/compas_cra/_ipopt/bin/` |
+| `build_ipopt.sh` | builds `ipopt` with coinbrew and stages it into `src/compas_sandbox/_ipopt/bin/` |
 | `check_binary.sh` | runs the binary and asserts it has no non-system dynamic dependencies |
 | `build_wheel.sh <tag>` | builds the wheel and forces the `py3-none-<tag>` tag |
 | `test_wheel.sh [python]` | installs the wheel into a clean venv and runs the test suite there |
@@ -35,7 +35,7 @@ platform serves every supported Python version**:
 ## What goes into the binary
 
 - **IPOPT 3.14.19**, Eclipse Public License 2.0
-- **MUMPS** as the linear solver. This is IPOPT's default and the one `compas_cra`
+- **MUMPS** as the linear solver. This is IPOPT's default and the one `compas_sandbox`
   relies on, since none of the formulations set `linear_solver`.
 - **AMPL ASL**, without which the `ipopt` executable is not built at all.
 - **BLAS/LAPACK**: a static OpenBLAS on Linux and Windows, Accelerate on macOS - named
@@ -68,7 +68,7 @@ On Windows the build runs in an MSYS2 UCRT64 shell; on macOS it needs `gfortran`
 
 ## Releasing
 
-`.github/workflows/wheels.yml` builds and tests all five wheels plus an sdist on every
+`.github/workflows/release.yml` builds and tests all five wheels plus an sdist on every
 push, and publishes them to PyPI with trusted publishing when a `v*` tag is pushed.
 
 `invoke release <patch|minor|major>` is the way to cut one: it runs the tests, bumps the

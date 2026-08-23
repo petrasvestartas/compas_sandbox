@@ -1,10 +1,10 @@
 # COMPAS CRA
 
-![build](https://github.com/blockresearchgroup/compas_cra/workflows/build/badge.svg)
-[![GitHub - License](https://img.shields.io/github/license/blockresearchgroup/compas_cra.svg)](./LICENSE)
-[![pip downloads](https://img.shields.io/pypi/dm/compas_cra)](https://pypi.python.org/project/compas_cra)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/compas_cra.svg)](https://pypi.python.org/project/compas_cra)
-[![PyPI - Latest Release](https://img.shields.io/pypi/v/compas_cra.svg)](https://pypi.python.org/project/compas_cra)
+![build](https://github.com/petrasvestartas/compas_sandbox/workflows/build/badge.svg)
+[![GitHub - License](https://img.shields.io/github/license/petrasvestartas/compas_sandbox.svg)](./LICENSE)
+[![pip downloads](https://img.shields.io/pypi/dm/compas_sandbox)](https://pypi.python.org/project/compas_sandbox)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/compas_sandbox.svg)](https://pypi.python.org/project/compas_sandbox)
+[![PyPI - Latest Release](https://img.shields.io/pypi/v/compas_sandbox.svg)](https://pypi.python.org/project/compas_sandbox)
 [![DOI](https://zenodo.org/badge/374677757.svg)](https://zenodo.org/badge/latestdoi/374677757)
 
 [Coupled Rigid-Block Analysis (CRA)](https://doi.org/10.1016/j.cad.2022.103216) implementation using [COMPAS](https://compas.dev/) framework.
@@ -14,7 +14,7 @@
 ## Installation
 
 ```bash
-pip install compas_cra
+pip install compas_sandbox
 ```
 
 Nothing else is needed on Windows, macOS (Apple Silicon and Intel) or Linux: the wheels
@@ -22,7 +22,7 @@ bundle a statically linked [IPOPT](https://coin-or.github.io/Ipopt/) 3.14.19 exe
 (Eclipse Public License 2.0, MUMPS linear solver, no HSL), built from source by
 [`packaging/`](./packaging). See [`packaging/README.md`](./packaging/README.md) for how
 it is built and which licenses apply, and the
-[installation docs](https://blockresearchgroup.github.io/compas_cra/latest/installation.html)
+[installation docs](https://github.com/petrasvestartas/compas_sandbox/latest/installation.html)
 for development installs.
 
 To find out more about CRA, please refer to our paper in the CAD Computer-Aided Design journal:
@@ -30,7 +30,7 @@ To find out more about CRA, please refer to our paper in the CAD Computer-Aided 
 
 ## Coupled Rigid-Block Analysis: Stability-Aware Design of Complex Discrete-Element Assemblies
 
-![image](https://github.com/BlockResearchGroup/compas_cra/blob/main/docs/_images/cra_bridge.png?raw=true)
+![image](https://github.com/petrasvestartas/compas_sandbox/blob/main/docs/_images/cra_bridge.png?raw=true)
 
 ### Abstract
 
@@ -74,7 +74,7 @@ by designing complex and scaffolding-free physical models.
 #### Software implementation
 
 ```latex
-@misc{compas-cra,
+@misc{compas-sandbox,
     title  = {{COMPAS CRA}: Coupled Rigid-Block Analysis ({CRA}) for the {COMPAS} framework},
     author = {Kao, Gene Ting-Chun},
     note   = {https://github.com/BlockResearchGroup/compas\_cra},
@@ -86,8 +86,8 @@ by designing complex and scaffolding-free physical models.
 
 ### Read the docs
 
-[https://blockresearchgroup.github.io/compas_cra](https://blockresearchgroup.github.io/compas_cra)
+[https://github.com/petrasvestartas/compas_sandbox](https://github.com/petrasvestartas/compas_sandbox)
 
 ### Examples to reproduce our paper results
 
-See examples in [docs](https://blockresearchgroup.github.io/compas_cra/latest/examples.html) or try them in [docs/examples](https://github.com/BlockResearchGroup/compas_cra/blob/main/docs/examples).
+See examples in [docs](https://github.com/petrasvestartas/compas_sandbox/latest/examples.html) or try them in [docs/examples](https://github.com/petrasvestartas/compas_sandbox/blob/main/docs/examples).

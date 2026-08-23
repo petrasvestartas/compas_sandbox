@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added a bundled, statically linked IPOPT executable to the platform wheels, so `pip install compas_cra` no longer needs conda, homebrew or a manually downloaded solver. Wheels are built for Windows, macOS (Apple Silicon and Intel) and manylinux (x86_64 and aarch64) by `.github/workflows/wheels.yml`.
+* Added a bundled, statically linked IPOPT executable to the platform wheels, so `pip install compas_sandbox` no longer needs conda, homebrew or a manually downloaded solver. Wheels are built for Windows, macOS (Apple Silicon and Intel) and manylinux (x86_64 and aarch64) by `.github/workflows/release.yml`.
 * Added `packaging/` with the scripts that build IPOPT 3.14.19 from source with coinbrew (MUMPS linear solver, no HSL), pack the platform wheels and test them in a clean environment.
-* Added `compas_cra._ipopt` to locate the solver, and a `compas-cra-ipopt` console script to check which solver will be used.
-* Added the `viz` optional dependencies (`pip install compas_cra[viz]`).
+* Added `compas_sandbox._ipopt` to locate the solver, and a `compas-sandbox-ipopt` console script to check which solver will be used.
+* Added the `viz` optional dependencies (`pip install compas_sandbox[viz]`).
 * Added `packaging/check_release.py`, run by the publish job before uploading: a release is rejected unless it carries a wheel for every supported platform and each wheel actually contains an ipopt executable.
 
 ### Changed
 
 * Declared the runtime dependencies (`compas`, `compas_assembly`, `numpy`, `pyomo`, `scipy`, `shapely`) in `requirements.txt`, which was empty.
-* `cra_solve`, `cra_penalty_solve` and `rbe_solve` now build their solver with `compas_cra.equilibrium._solver.ipopt_solver`, which points pyomo at the bundled executable. Solver options and tolerances are unchanged.
+* `cra_solve`, `cra_penalty_solve` and `rbe_solve` now build their solver with `compas_sandbox.equilibrium._solver.ipopt_solver`, which points pyomo at the bundled executable. Solver options and tolerances are unchanged.
 * Rewrote the installation instructions around pip; the manual Windows workaround for missing ipopt binaries is no longer needed.
 
 * Replaced kernel-layer `MatrixConstraint` with standard `pyo.Constraint` rules in `static_equilibrium_constraints` for compatibility with recent Pyomo versions.

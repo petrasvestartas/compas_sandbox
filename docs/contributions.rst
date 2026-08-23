@@ -12,7 +12,7 @@ Code contributions
 We accept code contributions through pull requests.
 In short, this is how that works.
 
-1. Fork `the repository <https://github.com/BlockResearchGroup/compas_cra>`_ and clone the fork.
+1. Fork `the repository <https://github.com/petrasvestartas/compas_sandbox>`_ and clone the fork.
 2. Create a virtual environment using your tool of choice (e.g. ``virtualenv``, ``conda``, etc).
 3. Install development dependencies:
 
@@ -55,7 +55,7 @@ For setting up Black in your editor, please refer to their documentation `Editor
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/BlockResearchGroup/compas_cra/issues>`_
+When `reporting a bug <https://github.com/petrasvestartas/compas_sandbox/issues>`_
 please include:
 
 * Operating system name and version.
@@ -67,7 +67,7 @@ Feature requests and feedback
 =============================
 
 The best way to send feedback is to file an issue on
-`Github <https://github.com/BlockResearchGroup/compas_cra/issues>`_.
+`Github <https://github.com/petrasvestartas/compas_sandbox/issues>`_.
 If you are proposing a feature:
 
 * Explain in detail how it would work.

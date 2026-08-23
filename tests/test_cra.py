@@ -3,8 +3,8 @@ from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Translation
 from compas_assembly.datastructures import Block
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
 
 
 def test_cra():

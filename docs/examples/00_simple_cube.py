@@ -6,9 +6,9 @@ from compas.geometry import Frame
 from compas.geometry import Translation
 from compas_assembly.datastructures import Block
 
-from compas_cra.datastructures import CRA_Assembly
-from compas_cra.equilibrium import cra_solve
-from compas_cra.viewers import cra_view
+from compas_sandbox.datastructures import CRA_Assembly
+from compas_sandbox.equilibrium import cra_solve
+from compas_sandbox.viewers import cra_view
 
 support = Box(1, 1, 1)  # supporting block
 free1 = Box(1, 1, 1, frame=Frame.worldXY().transformed(Translation.from_vector([0, 0, 1])))  # block to analyse

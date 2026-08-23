@@ -4,7 +4,7 @@ COMPAS CRA solves its models with :mod:`pyomo`, which drives IPOPT through the A
 ``.nl`` file interface: it shells out to the ``ipopt`` command line executable rather
 than linking against the library. There are no IPOPT wheels on PyPI (``cyipopt``
 publishes an sdist only, and needs a system IPOPT to compile against), so the platform
-wheels of :mod:`compas_cra` ship a statically linked ``ipopt`` binary inside this
+wheels of :mod:`compas_sandbox` ship a statically linked ``ipopt`` binary inside this
 package. See ``packaging/build_ipopt.sh`` for how it is built.
 
 The source distribution contains no binary; there :func:`executable` falls back to an
