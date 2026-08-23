@@ -62,6 +62,28 @@ Note that Rhino 8 ships CPython 3.9: `compas_sandbox` supports it since version 
 and pip automatically selects dependency versions that still support 3.9 (for example
 `pyomo` 6.9.x rather than 6.10+).
 
+### Known issue: Windows antivirus and the bundled solver
+
+The wheels bundle an `ipopt.exe` built from source by CI. Because every release
+produces a brand-new, unsigned binary with no reputation, some Windows antivirus
+setups (notably managed/corporate Defender policies) quarantine it after the first
+run. The symptom is a solve that worked once and then fails with
+"No IPOPT executable found" — run [`scripts/rhino_ipopt_check.py`](./scripts/rhino_ipopt_check.py)
+to confirm (an empty `bin dir` means the exe was removed).
+
+What to do:
+
+- **Personal machine**: restore the file from the antivirus quarantine and add an
+  exclusion for the install folder (e.g. `%USERPROFILE%\.rhinocode` for Rhino), then
+  `pip install --force-reinstall --only-binary :all: compas_sandbox`.
+- **Managed machine (no admin rights)**: ask IT to allowlist the file or folder, or
+  point the solver at any trusted ipopt binary by setting the environment variable
+  `COMPAS_SANDBOX_IPOPT` to its full path (a
+  [conda-forge ipopt](https://anaconda.org/conda-forge/ipopt) works).
+- The binaries carry version metadata identifying what they are, and the release
+  workflow supports Authenticode signing (Azure Trusted Signing) once a certificate
+  is configured, which resolves this properly.
+
 To find out more about CRA, please refer to our paper in the CAD Computer-Aided Design journal:
 [https://doi.org/10.1016/j.cad.2022.103216](https://doi.org/10.1016/j.cad.2022.103216 )
 

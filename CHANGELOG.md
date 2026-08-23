@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+* Added the `COMPAS_SANDBOX_IPOPT` environment variable to override the solver location, for machines where antivirus or application-control policies block the bundled binary.
+* The Windows `ipopt.exe` now carries a version resource (product, publisher, version, license), and the release workflow supports Authenticode signing via Azure Trusted Signing when the signing secrets are configured.
+
+### Changed
+
+### Removed
+
 ## [0.6.2] 2026-08-23
 
 ### Added

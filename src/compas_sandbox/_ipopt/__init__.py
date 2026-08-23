@@ -53,9 +53,14 @@ def bundled():
 def executable():
     """Return the path of the IPOPT executable to solve with.
 
-    The binary bundled in this package is preferred over one on ``PATH``, so that the
-    solver is the version this release was tested against regardless of what else the
-    environment provides.
+    The ``COMPAS_SANDBOX_IPOPT`` environment variable overrides everything: set it to
+    the full path of an ipopt executable to solve with that binary instead. This is the
+    escape hatch for machines where antivirus or application-control policies remove or
+    block the bundled binary and an allowlisted solver lives somewhere else.
+
+    Otherwise the binary bundled in this package is preferred over one on ``PATH``, so
+    that the solver is the version this release was tested against regardless of what
+    else the environment provides.
 
     Returns
     -------
@@ -63,6 +68,11 @@ def executable():
         None if no IPOPT executable can be found at all.
 
     """
+    override = os.environ.get("COMPAS_SANDBOX_IPOPT")
+    if override:
+        path = Path(override)
+        if path.is_file():
+            return path
     path = bundled()
     if path is not None:
         return path
