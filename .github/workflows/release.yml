@@ -1,6 +1,17 @@
 name: release
 
 # A release is the same pipeline every push runs, plus publishing. See pipeline.yml.
+#
+# The upload lives HERE rather than in pipeline.yml deliberately. PyPI's trusted
+# publishing matches the job_workflow_ref claim, and for a job defined inside a
+# reusable workflow that claim names the reusable file - so uploading from pipeline.yml
+# presents pipeline.yml and never matches a publisher configured for release.yml.
+# Reusable workflows are not supported by trusted publishing at all. Keeping the upload
+# in the calling workflow keeps workflow_ref and job_workflow_ref the same file, which
+# is the arrangement that published every release up to 0.7.2.
+#
+# Artifacts cross the boundary fine: a reusable workflow's jobs belong to the same run,
+# so the jobs below can download what pipeline.yml built.
 
 on:
   push:
@@ -15,3 +26,36 @@ jobs:
     permissions:
       id-token: write  # trusted publishing
       contents: write  # gh-pages + GitHub release
+
+  publish:
+    name: publish compas_sandbox to PyPI
+    needs: pipeline
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "{wheels-*,sdist}"
+          path: dist
+          merge-multiple: true
+      - run: ls -lh dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: create GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "{wheels-*,sdist}"
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

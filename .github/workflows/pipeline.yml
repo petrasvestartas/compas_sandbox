@@ -4,7 +4,9 @@ name: pipeline
 # release.yml (tags, publish: true). Always the full chain: IPOPT compiled from
 # source and linked into the compas_sandbox wheel for every platform, each wheel
 # smoke-tested, then the full test suite run against a built wheel. With
-# publish: true it publishes to PyPI, creates the GitHub release and deploys the docs.
+# publish: true it also deploys the docs. The PyPI upload and the GitHub release are
+# in release.yml, not here: trusted publishing cannot match a job that lives in a
+# reusable workflow - see the note at the top of release.yml.
 #
 # compas_sandbox ships its own solver, so there is one package and one version here:
 # the wheels below ARE the release. There is no separate compas_sandbox_native
@@ -219,41 +221,6 @@ jobs:
           # fail loudly if the wheel has no solver, so the tests cannot skip past it
           venv-test/bin/python -c "from compas_sandbox import _core; print('IPOPT', _core.IPOPT_VERSION)"
           cd /tmp && "$GITHUB_WORKSPACE/venv-test/bin/python" -m pytest "$GITHUB_WORKSPACE/tests" -v
-
-  publish:
-    name: publish compas_sandbox to PyPI
-    needs: [wheels-linux, wheels-macos, wheels-windows, sdist, test]
-    if: inputs.publish
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: "{wheels-*,sdist}"
-          path: dist
-          merge-multiple: true
-      - run: ls -lh dist
-      - uses: pypa/gh-action-pypi-publish@release/v1
-
-  github-release:
-    name: create GitHub release
-    needs: publish
-    if: inputs.publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: "*"
-          path: dist
-          merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
 
   docs:
     name: docs
