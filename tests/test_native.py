@@ -117,9 +117,9 @@ def test_cra_arch():
 
     Its convergence is steered by BLAS rounding, and with the monotone barrier update it
     took 1964 of the 3000 permitted iterations here while running out of them on the
-    macOS wheels, which were built against Accelerate rather than OpenBLAS. Both halves
-    of that are fixed -- one BLAS everywhere, and an adaptive barrier update that needs a
-    third of the iterations -- so a stall is now a regression rather than a skip."""
+    macOS wheels, which are built against Accelerate rather than OpenBLAS. The adaptive
+    barrier update needs a third of the iterations, which is margin enough that the
+    rounding no longer decides the outcome, so a stall is now a regression not a skip."""
     assembly = arch_assembly()
     cra_solve(assembly, mu=0.7)
     resultants = interface_resultants(assembly)

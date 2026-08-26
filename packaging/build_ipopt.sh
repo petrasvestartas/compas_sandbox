@@ -37,27 +37,15 @@ case "$(uname -s)" in
     *) echo "unsupported platform: $(uname -s)" >&2; exit 1 ;;
 esac
 
-# BLAS/LAPACK: OpenBLAS on every platform - statically on Linux and Windows, and as
-# the shared library on macOS.
+# BLAS/LAPACK: a static OpenBLAS on Linux and Windows, and Accelerate on macOS.
 #
-# macOS used Accelerate here until it turned out to be the reason the CRA solver failed
-# on Mac wheels alone. Accelerate ships a legacy LAPACK and rounds differently from the
-# OpenBLAS the Linux and Windows wheels use, which is enough to change IPOPT's iterate
-# path on the degenerate complementarity problems CRA builds: the same arch that stops
-# at a feasible point elsewhere runs to Maximum_Iterations_Exceeded there. One BLAS
-# everywhere makes the solver behave the same way on every wheel.
-#
-# Getting the flag through to the final link took some care. A `-l`-style flag leaves
-# every BLAS symbol undefined when libtool links the ipopt executable. Naming the
-# library by absolute path avoids that: it is a single token, so coinbrew cannot split
-# it, and it is an ordinary library path, so libtool passes it straight through.
-#
-# On macOS that path must be the .dylib, not the .a. coinbrew builds libcoinmumps as a
-# shared library whatever --disable-shared says, and libtool will not link a static
-# archive into one - it warns "not portable" and then fails. Linux gets away with the
-# static archive only because -lcralapack is a linker script, so libtool sees an
-# ordinary -l flag rather than an archive path. delocate bundles the dylib into the
-# wheel afterwards, exactly as it already does for libgfortran.
+# Getting the flag through to the final link took some care. `-framework Accelerate`
+# configures fine and then leaves every BLAS symbol undefined when libtool links the
+# ipopt executable, and homebrew's OpenBLAS is built against LLVM's OpenMP, so it drags
+# in libomp. Naming the SDK's Accelerate stub by absolute path avoids both: it is a
+# single token, so coinbrew cannot split it, and it is an ordinary library path, so
+# libtool passes it straight through. The framework flag also goes into LDFLAGS as a
+# belt-and-braces measure.
 #
 # A static libopenblas.a in turn needs libgfortran, libm and friends, and they have to
 # come *after* it on the link line. Neither LIBS nor a multi-word --with-lapack survives
@@ -78,22 +66,6 @@ find_openblas() {
         exit 1
     fi
     echo "$path"
-}
-
-# The macOS counterpart: the shared OpenBLAS. Being a dylib it carries its own
-# dependencies (libgfortran, and the libomp homebrew builds it against), so none of
-# them need to be named on the link line.
-find_openblas_dylib() {
-    local path
-    if command -v brew >/dev/null 2>&1; then
-        path="$(brew --prefix openblas 2>/dev/null)/lib/libopenblas.dylib"
-        if [ -f "$path" ]; then
-            echo "$path"
-            return 0
-        fi
-    fi
-    echo "ERROR: no shared openblas found (brew install openblas)" >&2
-    exit 1
 }
 
 make_lapack_shim() {
@@ -173,11 +145,16 @@ force_static_runtime_libs() {
 force_static_runtime_libs
 
 if [ "$PLATFORM" = "macos" ]; then
+    ACCELERATE="$(xcrun --show-sdk-path)/System/Library/Frameworks/Accelerate.framework/Accelerate.tbd"
+    if [ -f "$ACCELERATE" ]; then
+        LAPACK_FLAGS="${LAPACK_FLAGS:-$ACCELERATE}"
+    else
+        LAPACK_FLAGS="${LAPACK_FLAGS:--Wl,-framework,Accelerate}"
+    fi
     # ld64 resolves archives regardless of their position, so these can ride along in
     # LDFLAGS - there is no linker script to hold them the way there is with GNU ld.
-    LAPACK_FLAGS="${LAPACK_FLAGS:-$(find_openblas_dylib)}"
-    STATIC_LDFLAGS="$STATIC_LDFLAGS$SUPPORT_LINK_LIBS"
-    LAPACK_LABEL="shared OpenBLAS               BSD 3-clause"
+    STATIC_LDFLAGS="$STATIC_LDFLAGS -Wl,-framework,Accelerate$SUPPORT_LINK_LIBS"
+    LAPACK_LABEL="Apple Accelerate framework"
 else
     LAPACK_FLAGS="${LAPACK_FLAGS:--lcralapack}"
     LAPACK_LABEL="static OpenBLAS               BSD 3-clause"
@@ -267,7 +244,10 @@ collect_licenses() {
         "ThirdParty/Mumps/MUMPS/LICENSE:MUMPS-LICENSE.txt"
         "ThirdParty/ASL/LICENSE:ASL-LICENSE.txt"
     )
-    sources+=("$HERE/licenses/OpenBLAS-LICENSE.txt:OpenBLAS-LICENSE.txt")
+    # Accelerate is a system framework, so only the OpenBLAS builds bundle its license.
+    if [ "$LAPACK_FLAGS" = "-lcralapack" ]; then
+        sources+=("$HERE/licenses/OpenBLAS-LICENSE.txt:OpenBLAS-LICENSE.txt")
+    fi
     local src
     for src in "${sources[@]}"
     do
@@ -298,7 +278,7 @@ EOF
 BUILT="$STAGE_DIR/bin/$EXE_NAME"
 [ -f "$BUILT" ] || { echo "ERROR: $BUILT was not produced" >&2; exit 1; }
 
-# The product of this script is the static stage tree that the compas_sandbox._core
+# The product of this script is the static stage tree that the compas_sandbox_native
 # extension links against; verify it is complete.
 for artifact in lib/libipopt.a lib/libcoinmumps.a include/coin-or/IpTNLP.hpp; do
     [ -f "$STAGE_DIR/$artifact" ] || { echo "ERROR: $STAGE_DIR/$artifact was not produced" >&2; exit 1; }

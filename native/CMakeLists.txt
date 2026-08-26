@@ -58,20 +58,14 @@ target_link_libraries(_core PRIVATE
     "${IPOPT_PREFIX}/lib/libcoinmumps${CMAKE_STATIC_LIBRARY_SUFFIX}")
 target_compile_definitions(_core PRIVATE IPOPT_VERSION="${IPOPT_VERSION}")
 
-# BLAS/LAPACK: OpenBLAS on every platform (matching build_ipopt.sh). macOS used
-# Accelerate here until its legacy LAPACK turned out to round differently enough to
-# change IPOPT's iterate path on CRA's degenerate problems, failing on Mac wheels only.
+# BLAS/LAPACK: Accelerate on macOS, OpenBLAS elsewhere (matching build_ipopt.sh).
+# Accelerate's legacy LAPACK rounds differently from OpenBLAS, which is enough to steer
+# IPOPT's iterate path on CRA's degenerate problems -- see the mu_strategy note in
+# equilibrium/cra_native.py, which is what actually fixed the macOS stall. Moving macOS
+# onto OpenBLAS as well would make the solver bit-reproducible across wheels, but it
+# breaks the MUMPS link in coinbrew and is deliberately left for separate work.
 if(APPLE)
-    # homebrew keeps openblas keg-only, so its lib dir is not on the default search path
-    execute_process(
-        COMMAND brew --prefix openblas
-        OUTPUT_VARIABLE _brew_openblas OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
-    find_library(OPENBLAS_LIBRARY NAMES openblas HINTS "${_brew_openblas}/lib")
-    if(NOT OPENBLAS_LIBRARY)
-        message(FATAL_ERROR "no openblas found (brew install openblas)")
-    endif()
-    message(STATUS "OpenBLAS: ${OPENBLAS_LIBRARY}")
-    target_link_libraries(_core PRIVATE "${OPENBLAS_LIBRARY}")
+    target_link_options(_core PRIVATE "-Wl,-framework,Accelerate")
 else()
     target_link_libraries(_core PRIVATE openblas)
 endif()
