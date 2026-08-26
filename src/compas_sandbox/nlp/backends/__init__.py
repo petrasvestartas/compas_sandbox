@@ -41,8 +41,9 @@ def solve_nlp(problem, backend="auto", options=None, verbose=False):
         names = available_backends()
         if not names:
             raise RuntimeError(
-                "no NLP backend available: install the compas_sandbox_native package "
-                "for the in-process IPOPT solver"
+                "no NLP backend available: the compas_sandbox._core extension is missing, "
+                "which means this is a source install without a compiled solver -- "
+                "reinstall compas_sandbox from a wheel"
             )
         backend = names[0]
     if backend == "native":

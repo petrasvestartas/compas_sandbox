@@ -19,9 +19,10 @@ pip install compas_sandbox
 
 Nothing else is needed on Windows, macOS (Apple Silicon and Intel) or Linux. The
 [IPOPT](https://coin-or.github.io/Ipopt/) 3.14.19 solver (Eclipse Public License 2.0,
-MUMPS linear solver, no HSL) is compiled into the `compas_sandbox_native` dependency as
-a Python extension module with [nanobind](https://github.com/wjakob/nanobind), so
-solving happens in-process — no solver executables, no subprocess, no conda. See
+MUMPS linear solver, no HSL) is compiled into the package itself as the
+`compas_sandbox._core` extension module with [nanobind](https://github.com/wjakob/nanobind),
+so solving happens in-process — no solver executables, no subprocess, no conda, and no
+separate solver package whose version could drift from this one. See
 [`native/README.md`](./native/README.md) for how the extension is built and
 [`packaging/README.md`](./packaging/README.md) for the IPOPT build itself.
 

@@ -1,6 +1,7 @@
 [build-system]
-requires = ["setuptools>=66.0"]
-build-backend = "setuptools.build_meta"
+# nanobind 3.x dropped Python 3.9, which Rhino 8 still ships - stay on 2.x
+requires = ["scikit-build-core>=0.10", "nanobind>=2.2,<3"]
+build-backend = "scikit_build_core.build"
 
 # ============================================================================
 # project info
@@ -14,7 +15,15 @@ authors = [{ name = "Gene Ting-Chun Kao", email = "kao@arch.ethz.ch" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"
-dynamic = ['dependencies', 'optional-dependencies', 'version']
+dynamic = ["version"]
+dependencies = [
+    "compas>=2.4",
+    "compas_assembly>=0.7.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "shapely>=2.0",
+]
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Topic :: Scientific/Engineering",
@@ -30,6 +39,23 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "attrs>=17.4",
+    "black>=22.12.0",
+    "build",
+    "bump-my-version",
+    "compas_invocations2",
+    "compas_viewer",
+    "invoke>=0.14",
+    "pytest",
+    "ruff",
+    "sphinx_compas2_theme",
+    "twine",
+    "wheel",
+]
+viz = ["compas_viewer", "matplotlib"]
+
 [project.urls]
 Homepage = "https://github.com/petrasvestartas/compas_sandbox"
 Documentation = "https://github.com/petrasvestartas/compas_sandbox"
@@ -37,25 +63,29 @@ Repository = "https://github.com/petrasvestartas/compas_sandbox.git"
 Changelog = "https://github.com/petrasvestartas/compas_sandbox/blob/main/CHANGELOG.md"
 
 # ============================================================================
-# setuptools config
+# build config
 # ============================================================================
+#
+# compas_sandbox ships its own solver: IPOPT and the MUMPS linear solver are compiled
+# into the in-package extension module `compas_sandbox._core` rather than being pulled
+# in from a separate `compas_sandbox_native` distribution. That makes this a
+# platform-specific wheel instead of a universal one, and it means the version of the
+# Python code and the version of the solver it runs on can no longer drift apart.
+#
+# The CMake project lives in native/ and needs the static IPOPT stage tree produced by
+# packaging/build_ipopt.sh; point IPOPT_PREFIX at it before building from source.
 
-[tool.setuptools]
-package-dir = { "" = "src" }
-include-package-data = true
-zip-safe = false
+[tool.scikit-build]
+minimum-version = "0.10"
+cmake.source-dir = "native"
+wheel.packages = ["src/compas_sandbox"]
+# stripping would invalidate the macOS ad-hoc code signature; arm64 kills unsigned code
+install.strip = false
+sdist.include = ["native/", "packaging/"]
 
-[tool.setuptools.dynamic]
-version = { attr = "compas_sandbox.__version__" }
-dependencies = { file = "requirements.txt" }
-optional-dependencies = { dev = { file = "requirements-dev.txt" }, viz = { file = "requirements-viz.txt" } }
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-# data/ is not a package, so it needs an explicit glob to end up in the wheel
-"compas_sandbox" = ["data/samples/*.json"]
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/compas_sandbox/__init__.py"
 
 # ============================================================================
 # replace pytest.ini

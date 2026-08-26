@@ -17,7 +17,7 @@ from .cra_helper import (
     free_nodes,
 )
 
-# The solvers run on the in-process IPOPT binding (compas_sandbox_native); the
+# The solvers run on the in-process IPOPT binding (compas_sandbox._core); the
 # historical names are kept as the canonical API.
 cra_solve = cra_solve_native
 cra_penalty_solve = cra_penalty_solve_native

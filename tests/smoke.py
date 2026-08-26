@@ -1,4 +1,4 @@
-"""Minimal smoke test for a built compas_sandbox_native wheel.
+"""Minimal smoke test for a built compas_sandbox wheel.
 
 Solves min x^2 s.t. x >= 1 — enough to prove the extension loads, IPOPT runs, the
 MUMPS linear solver works and callbacks round-trip. Needs only numpy, so it can run
@@ -7,11 +7,11 @@ in the bare test environments of the wheel-building CI.
 
 import numpy as np
 
-import compas_sandbox_native as csn
+from compas_sandbox import _core
 
-print("compas_sandbox_native, IPOPT", csn.IPOPT_VERSION)
+print("compas_sandbox._core, IPOPT", _core.IPOPT_VERSION)
 
-res = csn.solve_nlp(
+res = _core.solve_nlp(
     n=1,
     m=1,
     x_l=np.array([-10.0]),

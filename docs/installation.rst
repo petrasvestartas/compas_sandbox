@@ -12,9 +12,10 @@ Stable
     pip install compas_sandbox
 
 That is all that is needed, on Windows, macOS (Apple Silicon and Intel) and Linux.
-The `IPOPT <https://coin-or.github.io/Ipopt/>`_ solver is compiled into the
-``compas_sandbox_native`` dependency as a Python extension module, so solving happens
-in-process: no conda environment, no homebrew and no solver executables are involved.
+The `IPOPT <https://coin-or.github.io/Ipopt/>`_ solver is compiled into the package
+itself as the ``compas_sandbox._core`` extension module, so solving happens in-process:
+no conda environment, no homebrew and no solver executables are involved. There is no
+separate solver package to install or keep in step -- the wheel you get is the solver.
 
 To also install the viewers:
 
@@ -26,7 +27,7 @@ Verify the solver is available with:
 
 .. code-block:: bash
 
-    python -c "import compas_sandbox_native as n; print(n.IPOPT_VERSION)"
+    python -c "from compas_sandbox import _core; print(_core.IPOPT_VERSION)"
 
 
 Rhino 8

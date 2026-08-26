@@ -37,15 +37,19 @@ case "$(uname -s)" in
     *) echo "unsupported platform: $(uname -s)" >&2; exit 1 ;;
 esac
 
-# BLAS/LAPACK: a static OpenBLAS on Linux and Windows, and Accelerate on macOS.
+# BLAS/LAPACK: a static OpenBLAS on every platform.
 #
-# Getting the flag through to the final link took some care. `-framework Accelerate`
-# configures fine and then leaves every BLAS symbol undefined when libtool links the
-# ipopt executable, and homebrew's OpenBLAS is built against LLVM's OpenMP, so it drags
-# in libomp. Naming the SDK's Accelerate stub by absolute path avoids both: it is a
-# single token, so coinbrew cannot split it, and it is an ordinary library path, so
-# libtool passes it straight through. The framework flag also goes into LDFLAGS as a
-# belt-and-braces measure.
+# macOS used Accelerate here until it turned out to be the reason the CRA solver failed
+# on Mac wheels alone. Accelerate ships a legacy LAPACK and rounds differently from the
+# OpenBLAS the Linux and Windows wheels use, which is enough to change IPOPT's iterate
+# path on the degenerate complementarity problems CRA builds: the same arch that stops
+# at a feasible point elsewhere runs to Maximum_Iterations_Exceeded there. One BLAS
+# everywhere makes the solver behave the same way on every wheel.
+#
+# Getting the flag through to the final link took some care. A `-l`-style flag leaves
+# every BLAS symbol undefined when libtool links the ipopt executable. Naming the
+# static archive by absolute path avoids that: it is a single token, so coinbrew cannot
+# split it, and it is an ordinary library path, so libtool passes it straight through.
 #
 # A static libopenblas.a in turn needs libgfortran, libm and friends, and they have to
 # come *after* it on the link line. Neither LIBS nor a multi-word --with-lapack survives
@@ -66,6 +70,18 @@ find_openblas() {
         exit 1
     fi
     echo "$path"
+}
+
+# homebrew builds OpenBLAS against LLVM's OpenMP, so the static archive pulls in libomp
+# symbols that nothing else on the link line defines. Only macOS needs this; the Linux
+# and Windows OpenBLAS builds get their OpenMP runtime from libgomp in RUNTIME_LINK_LIBS.
+find_libomp_flags() {
+    local prefix
+    command -v brew >/dev/null 2>&1 || return 0
+    prefix="$(brew --prefix libomp 2>/dev/null)"
+    if [ -n "$prefix" ] && [ -d "$prefix/lib" ]; then
+        echo " -L$prefix/lib -lomp"
+    fi
 }
 
 make_lapack_shim() {
@@ -145,20 +161,15 @@ force_static_runtime_libs() {
 force_static_runtime_libs
 
 if [ "$PLATFORM" = "macos" ]; then
-    ACCELERATE="$(xcrun --show-sdk-path)/System/Library/Frameworks/Accelerate.framework/Accelerate.tbd"
-    if [ -f "$ACCELERATE" ]; then
-        LAPACK_FLAGS="${LAPACK_FLAGS:-$ACCELERATE}"
-    else
-        LAPACK_FLAGS="${LAPACK_FLAGS:--Wl,-framework,Accelerate}"
-    fi
-    # ld64 resolves archives regardless of their position, so these can ride along in
-    # LDFLAGS - there is no linker script to hold them the way there is with GNU ld.
-    STATIC_LDFLAGS="$STATIC_LDFLAGS -Wl,-framework,Accelerate$SUPPORT_LINK_LIBS"
-    LAPACK_LABEL="Apple Accelerate framework"
+    # ld64 resolves archives regardless of their position, so the Fortran and OpenMP
+    # runtimes can ride along in LDFLAGS - there is no linker script to hold them in
+    # order the way there is with GNU ld, and none is needed.
+    LAPACK_FLAGS="${LAPACK_FLAGS:-$(find_openblas)}"
+    STATIC_LDFLAGS="$STATIC_LDFLAGS$RUNTIME_LINK_LIBS$SUPPORT_LINK_LIBS$(find_libomp_flags)"
 else
     LAPACK_FLAGS="${LAPACK_FLAGS:--lcralapack}"
-    LAPACK_LABEL="static OpenBLAS               BSD 3-clause"
 fi
+LAPACK_LABEL="static OpenBLAS               BSD 3-clause"
 echo "  lapack: $LAPACK_FLAGS"
 
 if [ "$PLATFORM" = "macos" ]; then
@@ -244,10 +255,7 @@ collect_licenses() {
         "ThirdParty/Mumps/MUMPS/LICENSE:MUMPS-LICENSE.txt"
         "ThirdParty/ASL/LICENSE:ASL-LICENSE.txt"
     )
-    # Accelerate is a system framework, so only the OpenBLAS builds bundle its license.
-    if [ "$LAPACK_FLAGS" = "-lcralapack" ]; then
-        sources+=("$HERE/licenses/OpenBLAS-LICENSE.txt:OpenBLAS-LICENSE.txt")
-    fi
+    sources+=("$HERE/licenses/OpenBLAS-LICENSE.txt:OpenBLAS-LICENSE.txt")
     local src
     for src in "${sources[@]}"
     do
@@ -278,7 +286,7 @@ EOF
 BUILT="$STAGE_DIR/bin/$EXE_NAME"
 [ -f "$BUILT" ] || { echo "ERROR: $BUILT was not produced" >&2; exit 1; }
 
-# The product of this script is the static stage tree that the compas_sandbox_native
+# The product of this script is the static stage tree that the compas_sandbox._core
 # extension links against; verify it is complete.
 for artifact in lib/libipopt.a lib/libcoinmumps.a include/coin-or/IpTNLP.hpp; do
     [ -f "$STAGE_DIR/$artifact" ] || { echo "ERROR: $STAGE_DIR/$artifact was not produced" >&2; exit 1; }

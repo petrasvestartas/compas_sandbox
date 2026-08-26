@@ -3,8 +3,8 @@
   termination condition, which is reported as a :class:`ValueError` by the solver
   functions.
 
-- The solver is provided by the ``compas_sandbox_native`` package, a compiled extension
-  installed automatically as a dependency. If importing it fails (for example on a
-  platform without prebuilt wheels), build it from source: run
-  ``packaging/build_ipopt.sh`` and then ``pip install ./native`` — see
+- The solver ships inside the package as the compiled ``compas_sandbox._core``
+  extension, so a working install always has one. On a platform without a prebuilt
+  wheel, pip falls back to the sdist, which has to compile it: run
+  ``packaging/build_ipopt.sh`` first and then ``pip install .`` — see
   ``native/README.md``.

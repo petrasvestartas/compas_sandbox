@@ -14,11 +14,14 @@ In short, this is how that works.
 
 1. Fork `the repository <https://github.com/petrasvestartas/compas_sandbox>`_ and clone the fork.
 2. Create a virtual environment using your tool of choice (e.g. ``virtualenv``, ``conda``, etc).
-3. Install development dependencies:
+3. Build the solver and install the package with its development dependencies. The
+   compiled ``compas_sandbox._core`` extension is part of the package, so this step
+   compiles IPOPT first; without it the solver tests skip:
 
 ::
 
-    $ pip install -r requirements-dev.txt
+    $ packaging/build_ipopt.sh
+    $ pip install -e ".[dev]"
 
 
 4. Make sure all tests pass:

@@ -1,8 +1,10 @@
-"""In-process IPOPT backend, provided by the ``compas_sandbox_native`` extension.
+"""In-process IPOPT backend, provided by the ``compas_sandbox._core`` extension.
 
 The extension links IPOPT (with the MUMPS linear solver) statically into a Python
 module, so solving happens in-process with numpy-array callbacks: no subprocess, no
-``.nl`` files, no bundled executable.
+``.nl`` files, no bundled executable. It is built from ``native/`` and ships inside
+this package, so its presence is a property of the installed wheel rather than of a
+separate distribution that could be missing or out of step.
 """
 
 import numpy as np
@@ -28,7 +30,7 @@ _DEFAULT_OPTIONS = {
 
 def is_available():
     try:
-        import compas_sandbox_native  # noqa: F401
+        from compas_sandbox import _core  # noqa: F401
     except ImportError:
         return False
     return True
@@ -36,7 +38,7 @@ def is_available():
 
 def solve(problem, options=None, verbose=False):
     """Solve an :class:`~compas_sandbox.nlp.problem.NLPProblem` with in-process IPOPT."""
-    import compas_sandbox_native
+    from compas_sandbox import _core
 
     opts = dict(_DEFAULT_OPTIONS)
     opts.update(options or {})
@@ -45,7 +47,7 @@ def solve(problem, options=None, verbose=False):
     if not problem.has_hessian:
         opts.setdefault("hessian_approximation", "limited-memory")
 
-    raw = compas_sandbox_native.solve_nlp(
+    raw = _core.solve_nlp(
         n=problem.n,
         m=problem.m,
         x_l=problem.x_l,

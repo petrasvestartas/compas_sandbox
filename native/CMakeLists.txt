@@ -1,11 +1,15 @@
-# compas_sandbox_native: IPOPT bound into a Python extension module.
+# compas_sandbox._core: IPOPT bound into a Python extension module.
 #
 # IPOPT (and its MUMPS linear solver) are consumed as the static libraries produced by
 # packaging/build_ipopt.sh; point IPOPT_PREFIX (env or cache var) at that stage tree.
 # The result is one self-contained extension module: no ipopt executable, no DLLs.
+#
+# This is driven by the repository root pyproject.toml through scikit-build-core
+# (cmake.source-dir = "native"), so the module is installed into the compas_sandbox
+# package itself rather than a separate compas_sandbox_native distribution.
 
 cmake_minimum_required(VERSION 3.18...3.30)
-project(compas_sandbox_native LANGUAGES CXX)
+project(compas_sandbox_core LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,9 +58,20 @@ target_link_libraries(_core PRIVATE
     "${IPOPT_PREFIX}/lib/libcoinmumps${CMAKE_STATIC_LIBRARY_SUFFIX}")
 target_compile_definitions(_core PRIVATE IPOPT_VERSION="${IPOPT_VERSION}")
 
-# BLAS/LAPACK: Accelerate on macOS, OpenBLAS elsewhere (matching build_ipopt.sh)
+# BLAS/LAPACK: OpenBLAS on every platform (matching build_ipopt.sh). macOS used
+# Accelerate here until its legacy LAPACK turned out to round differently enough to
+# change IPOPT's iterate path on CRA's degenerate problems, failing on Mac wheels only.
 if(APPLE)
-    target_link_options(_core PRIVATE "-Wl,-framework,Accelerate")
+    # homebrew keeps openblas keg-only, so its lib dir is not on the default search path
+    execute_process(
+        COMMAND brew --prefix openblas
+        OUTPUT_VARIABLE _brew_openblas OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    find_library(OPENBLAS_LIBRARY NAMES openblas HINTS "${_brew_openblas}/lib")
+    if(NOT OPENBLAS_LIBRARY)
+        message(FATAL_ERROR "no openblas found (brew install openblas)")
+    endif()
+    message(STATUS "OpenBLAS: ${OPENBLAS_LIBRARY}")
+    target_link_libraries(_core PRIVATE "${OPENBLAS_LIBRARY}")
 else()
     target_link_libraries(_core PRIVATE openblas)
 endif()
@@ -106,4 +121,4 @@ if(APPLE)
         COMMENT "ad-hoc signing $<TARGET_FILE:_core>")
 endif()
 
-install(TARGETS _core LIBRARY DESTINATION compas_sandbox_native)
+install(TARGETS _core LIBRARY DESTINATION compas_sandbox)

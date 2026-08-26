@@ -1,6 +1,6 @@
 #! python3
 # venv: compas-sandbox
-# r: compas_sandbox>=0.7.2
+# r: compas_sandbox>=0.7.3
 """Parametric masonry arch: CRA equilibrium, baked into the Rhino document."""
 
 import rhinoscriptsyntax as rs

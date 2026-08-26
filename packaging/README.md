@@ -1,11 +1,12 @@
 # Packaging
 
 `compas_sandbox` solves its models with [IPOPT](https://coin-or.github.io/Ipopt/)
-compiled into a Python extension module — the `compas_sandbox_native` package in
-[`native/`](../native). `build_ipopt.sh` builds IPOPT (with the MUMPS linear solver)
-from source with coinbrew as **static libraries**, staged into `build/ipopt/stage`;
-the extension links against that stage tree. `.github/workflows/native.yml` runs the
-build per platform and packs the extension wheels for CPython 3.9–3.13 with
+compiled into a Python extension module — `compas_sandbox._core`, whose CMake project
+lives in [`native/`](../native) and is driven by the root `pyproject.toml` through
+scikit-build-core. `build_ipopt.sh` builds IPOPT (with the MUMPS linear solver) from
+source with coinbrew as **static libraries**, staged into `build/ipopt/stage`; the
+extension links against that stage tree. `.github/workflows/pipeline.yml` runs the
+build per platform and packs the `compas_sandbox` wheels for CPython 3.9–3.13 with
 cibuildwheel.
 
 | script | what it does |

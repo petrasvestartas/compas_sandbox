@@ -2,9 +2,13 @@ name: pipeline
 
 # The single build pipeline, used by build.yml (every push, publish: false) and
 # release.yml (tags, publish: true). Always the full chain: IPOPT compiled from
-# source, native wheels for every platform, each smoke-tested, and the pure package
-# tested against the just-built native wheel. With publish: true it then publishes
-# native -> sandbox in order, creates the GitHub release and deploys the docs.
+# source and linked into the compas_sandbox wheel for every platform, each wheel
+# smoke-tested, then the full test suite run against a built wheel. With
+# publish: true it publishes to PyPI, creates the GitHub release and deploys the docs.
+#
+# compas_sandbox ships its own solver, so there is one package and one version here:
+# the wheels below ARE the release. There is no separate compas_sandbox_native
+# distribution to keep in step any more.
 
 on:
   workflow_call:
@@ -15,10 +19,12 @@ on:
 
 env:
   IPOPT_VERSION: "3.14.19"
+  CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+  CIBW_TEST_COMMAND: "python {package}/tests/smoke.py"
 
 jobs:
-  native-linux:
-    name: native-${{ matrix.tag }}
+  wheels-linux:
+    name: wheels-${{ matrix.tag }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -37,7 +43,6 @@ jobs:
           python-version: "3.12"
       - name: Build wheels
         env:
-          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
@@ -48,18 +53,16 @@ jobs:
             env CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC"
             {project}/packaging/build_ipopt.sh
           CIBW_ENVIRONMENT_LINUX: IPOPT_PREFIX=/project/build/ipopt/stage
-          CIBW_TEST_REQUIRES: numpy
-          CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |
           python -m pip install -q cibuildwheel
-          python -m cibuildwheel native --output-dir dist
+          python -m cibuildwheel . --output-dir dist
       - uses: actions/upload-artifact@v4
         with:
-          name: native-${{ matrix.tag }}
+          name: wheels-${{ matrix.tag }}
           path: dist/*.whl
 
-  native-macos:
-    name: native-${{ matrix.tag }}
+  wheels-macos:
+    name: wheels-${{ matrix.tag }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -80,6 +83,7 @@ jobs:
         run: |
           brew list bash >/dev/null 2>&1 || brew install bash
           brew list gcc >/dev/null 2>&1 || brew install gcc
+          brew list openblas >/dev/null 2>&1 || brew install openblas
           test -x "$(brew --prefix)/bin/gfortran" || \
             ln -sf "$(ls "$(brew --prefix)"/bin/gfortran-* | tail -1)" "$(brew --prefix)/bin/gfortran"
       - name: Cache ipopt build
@@ -95,22 +99,19 @@ jobs:
         run: packaging/build_ipopt.sh
       - name: Build wheels
         env:
-          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX=${{ github.workspace }}/build/ipopt/stage
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.deployment_target }}
-          CIBW_TEST_REQUIRES: numpy
-          CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |
           python -m pip install -q cibuildwheel
-          python -m cibuildwheel native --output-dir dist
+          python -m cibuildwheel . --output-dir dist
       - uses: actions/upload-artifact@v4
         with:
-          name: native-${{ matrix.tag }}
+          name: wheels-${{ matrix.tag }}
           path: dist/*.whl
 
-  native-windows:
-    name: native-win_amd64
+  wheels-windows:
+    name: wheels-win_amd64
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -144,7 +145,6 @@ jobs:
       - name: Build wheels
         shell: bash
         env:
-          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_ARCHS_WINDOWS: AMD64
           CIBW_ENVIRONMENT: >-
             IPOPT_PREFIX='${{ github.workspace }}\build\ipopt\stage'
@@ -154,78 +154,54 @@ jobs:
           CIBW_BEFORE_BUILD: pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair --add-path D:\msys64\ucrt64\bin -w {dest_dir} {wheel}
-          CIBW_TEST_REQUIRES: numpy
-          CIBW_TEST_COMMAND: python {package}/tests/smoke.py
         run: |
           python -m pip install -q cibuildwheel
-          python -m cibuildwheel native --output-dir dist
+          python -m cibuildwheel . --output-dir dist
       - uses: actions/upload-artifact@v4
         with:
-          name: native-win_amd64
+          name: wheels-win_amd64
           path: dist/*.whl
 
-  native-sdist:
-    name: native-sdist
+  sdist:
+    name: sdist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pipx run build --sdist native --outdir dist
+      - run: pipx run build --sdist . --outdir dist
       - uses: actions/upload-artifact@v4
         with:
-          name: native-sdist
+          name: sdist
           path: dist/*.tar.gz
 
-  build:
-    name: build compas_sandbox
-    needs: native-linux
+  test:
+    name: test the built wheel
+    needs: wheels-linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pipx run build
       - uses: actions/download-artifact@v4
         with:
-          name: native-manylinux_2_28_x86_64
-          path: native-dist
-      - name: Test the built wheel against the just-built native wheel
+          name: wheels-manylinux_2_28_x86_64
+          path: dist
+      # install the wheel, not the source tree: this proves the shipped artifact
+      # carries a working solver, which is the thing that used to be able to drift
+      - name: Run the test suite against the wheel
         run: |
           python -m venv venv-test
-          venv-test/bin/pip install -q native-dist/compas_sandbox_native-*-cp312-*.whl dist/*.whl pytest
+          venv-test/bin/pip install -q dist/compas_sandbox-*-cp312-*manylinux*.whl pytest
+          # fail loudly if the wheel has no solver, so the tests cannot skip past it
+          venv-test/bin/python -c "from compas_sandbox import _core; print('IPOPT', _core.IPOPT_VERSION)"
           cd /tmp && "$GITHUB_WORKSPACE/venv-test/bin/python" -m pytest "$GITHUB_WORKSPACE/tests" -v
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/*
-
-  publish-native:
-    name: publish compas_sandbox_native to PyPI
-    needs: [native-linux, native-macos, native-windows, native-sdist]
-    if: inputs.publish
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: native-*
-          path: dist
-          merge-multiple: true
-      - run: ls -lh dist
-      # re-tagging without a native version bump republishes nothing, deliberately
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
 
   publish:
     name: publish compas_sandbox to PyPI
-    needs: [build, publish-native]
+    needs: [wheels-linux, wheels-macos, wheels-windows, sdist, test]
     if: inputs.publish
     runs-on: ubuntu-latest
     environment:
@@ -235,8 +211,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          pattern: "{wheels-*,sdist}"
           path: dist
+          merge-multiple: true
+      - run: ls -lh dist
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
@@ -258,7 +236,7 @@ jobs:
 
   docs:
     name: docs
-    needs: build
+    needs: wheels-linux
     runs-on: ubuntu-latest
     permissions:
       contents: write  # deploying pushes the built site to the gh-pages branch
@@ -269,16 +247,15 @@ jobs:
           python-version: "3.12"
       - uses: actions/download-artifact@v4
         with:
-          name: native-manylinux_2_28_x86_64
-          path: native-dist
-      # PyPI-only install; the solver comes from this run's own artifacts, so the
-      # docs build never depends on PyPI propagation state
+          name: wheels-manylinux_2_28_x86_64
+          path: dist
+      # install the built wheel rather than the source tree: an editable install would
+      # have to compile the extension, and this job has no IPOPT stage tree
       - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1
           python -m pip install -q --upgrade pip
-          python -m pip install -q native-dist/compas_sandbox_native-*-cp312-*.whl
-          python -m pip install -q -e ".[dev]"
+          python -m pip install -q "$(ls dist/compas_sandbox-*-cp312-*manylinux*.whl)[dev]"
       - name: Build docs
         run: |
           invoke docs

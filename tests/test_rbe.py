@@ -6,6 +6,14 @@ from compas_sandbox.datastructures import CRA_Assembly
 from compas_sandbox.algorithms import assembly_interfaces_numpy
 from compas_sandbox.equilibrium import rbe_solve
 
+import pytest
+
+# The solver is the compiled compas_sandbox._core extension, which a plain source
+# checkout does not have until it is built (packaging/build_ipopt.sh, then pip install
+# .). Skip rather than fail there. This cannot mask a solver-less wheel in CI: the wheel
+# build smoke-tests the extension, and the test job imports it before pytest runs.
+pytest.importorskip("compas_sandbox._core")
+
 
 def test_cra_penalty():
     support = Box(1, 1, 1)  # supporting block

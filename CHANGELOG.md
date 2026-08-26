@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+* **`compas_sandbox` ships its own solver again: one package, one version.** IPOPT and the MUMPS linear solver are compiled into the in-package extension `compas_sandbox._core` instead of being pulled in from a separate `compas_sandbox_native` distribution, so `compas_sandbox` is now a platform wheel (CPython 3.9–3.13 on Windows, macOS arm64/x86_64, manylinux x86_64/aarch64) rather than a universal one. The split it replaces could silently desynchronise: a `compas_sandbox` release did not republish the native wheel, so a fix to the compiled solver could sit in the repository without ever reaching users. The CMake project stays in `native/`, now driven by the root `pyproject.toml` through scikit-build-core.
+* The CRA solvers use IPOPT's adaptive barrier update (`mu_strategy="adaptive"`). CRA's complementarity constraints are degenerate and the monotone update crawls on them: the 20-block arch needed 1964 of IPOPT's 3000 permitted iterations, leaving almost no margin, and the macOS wheels ran out of iterations entirely and raised `solve failed: failed (Maximum_Iterations_Exceeded)`. The adaptive update reaches the same answer (interface resultants agree to 1e-10) in 668 iterations, and 307 rather than 2757 on a 40-block arch.
+* The macOS native wheels link OpenBLAS instead of Apple's Accelerate, matching the Linux and Windows wheels. Accelerate ships a legacy LAPACK and rounds differently, which was enough to steer IPOPT's iterate path into the iteration cap on Mac only — the same solve that stopped at a feasible point elsewhere. One BLAS everywhere makes the solver reproducible across wheels.
+* `test_cra_arch` no longer skips itself when the arch stalls, and a companion test asserts the solve keeps its iteration headroom. The skip is what let the macOS failure reach users.
+* CI builds and tests `compas_sandbox` wheels directly: the test job installs a built wheel rather than the source tree, so what is tested is what is shipped.
+
+### Removed
+
+* The separate `compas_sandbox_native` distribution. Its contents now ship inside `compas_sandbox`; the runtime dependency on it is gone, and `requirements.txt`, `requirements-dev.txt` and `requirements-viz.txt` are folded into `pyproject.toml`.
+
 ## [0.7.2] 2026-08-23
 
 ### Added
