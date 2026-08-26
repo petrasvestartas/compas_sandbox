@@ -97,6 +97,17 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "11.0"
         run: packaging/build_ipopt.sh
+      - name: Show ipopt build logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          # coinbrew prints "Build failed, see error output above" and then swallows the
+          # actual compiler/linker error, so dig the per-project logs out of the tree
+          echo "--- logs under build/ipopt ---"
+          find build/ipopt -name "*.log" 2>/dev/null | head -30 | while read -r f; do
+            echo "===================== $f ====================="
+            tail -150 "$f"
+          done
       - name: Build wheels
         env:
           CIBW_ENVIRONMENT: >-
@@ -142,6 +153,17 @@ jobs:
         if: steps.cache-ipopt.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: packaging/build_ipopt.sh
+      - name: Show ipopt build logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          # coinbrew prints "Build failed, see error output above" and then swallows the
+          # actual compiler/linker error, so dig the per-project logs out of the tree
+          echo "--- logs under build/ipopt ---"
+          find build/ipopt -name "*.log" 2>/dev/null | head -30 | while read -r f; do
+            echo "===================== $f ====================="
+            tail -150 "$f"
+          done
       - name: Build wheels
         shell: bash
         env:

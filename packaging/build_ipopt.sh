@@ -37,7 +37,8 @@ case "$(uname -s)" in
     *) echo "unsupported platform: $(uname -s)" >&2; exit 1 ;;
 esac
 
-# BLAS/LAPACK: a static OpenBLAS on every platform.
+# BLAS/LAPACK: OpenBLAS on every platform - statically on Linux and Windows, and as
+# the shared library on macOS.
 #
 # macOS used Accelerate here until it turned out to be the reason the CRA solver failed
 # on Mac wheels alone. Accelerate ships a legacy LAPACK and rounds differently from the
@@ -48,8 +49,15 @@ esac
 #
 # Getting the flag through to the final link took some care. A `-l`-style flag leaves
 # every BLAS symbol undefined when libtool links the ipopt executable. Naming the
-# static archive by absolute path avoids that: it is a single token, so coinbrew cannot
-# split it, and it is an ordinary library path, so libtool passes it straight through.
+# library by absolute path avoids that: it is a single token, so coinbrew cannot split
+# it, and it is an ordinary library path, so libtool passes it straight through.
+#
+# On macOS that path must be the .dylib, not the .a. coinbrew builds libcoinmumps as a
+# shared library whatever --disable-shared says, and libtool will not link a static
+# archive into one - it warns "not portable" and then fails. Linux gets away with the
+# static archive only because -lcralapack is a linker script, so libtool sees an
+# ordinary -l flag rather than an archive path. delocate bundles the dylib into the
+# wheel afterwards, exactly as it already does for libgfortran.
 #
 # A static libopenblas.a in turn needs libgfortran, libm and friends, and they have to
 # come *after* it on the link line. Neither LIBS nor a multi-word --with-lapack survives
@@ -72,16 +80,20 @@ find_openblas() {
     echo "$path"
 }
 
-# homebrew builds OpenBLAS against LLVM's OpenMP, so the static archive pulls in libomp
-# symbols that nothing else on the link line defines. Only macOS needs this; the Linux
-# and Windows OpenBLAS builds get their OpenMP runtime from libgomp in RUNTIME_LINK_LIBS.
-find_libomp_flags() {
-    local prefix
-    command -v brew >/dev/null 2>&1 || return 0
-    prefix="$(brew --prefix libomp 2>/dev/null)"
-    if [ -n "$prefix" ] && [ -d "$prefix/lib" ]; then
-        echo " -L$prefix/lib -lomp"
+# The macOS counterpart: the shared OpenBLAS. Being a dylib it carries its own
+# dependencies (libgfortran, and the libomp homebrew builds it against), so none of
+# them need to be named on the link line.
+find_openblas_dylib() {
+    local path
+    if command -v brew >/dev/null 2>&1; then
+        path="$(brew --prefix openblas 2>/dev/null)/lib/libopenblas.dylib"
+        if [ -f "$path" ]; then
+            echo "$path"
+            return 0
+        fi
     fi
+    echo "ERROR: no shared openblas found (brew install openblas)" >&2
+    exit 1
 }
 
 make_lapack_shim() {
@@ -161,15 +173,15 @@ force_static_runtime_libs() {
 force_static_runtime_libs
 
 if [ "$PLATFORM" = "macos" ]; then
-    # ld64 resolves archives regardless of their position, so the Fortran and OpenMP
-    # runtimes can ride along in LDFLAGS - there is no linker script to hold them in
-    # order the way there is with GNU ld, and none is needed.
-    LAPACK_FLAGS="${LAPACK_FLAGS:-$(find_openblas)}"
-    STATIC_LDFLAGS="$STATIC_LDFLAGS$RUNTIME_LINK_LIBS$SUPPORT_LINK_LIBS$(find_libomp_flags)"
+    # ld64 resolves archives regardless of their position, so these can ride along in
+    # LDFLAGS - there is no linker script to hold them the way there is with GNU ld.
+    LAPACK_FLAGS="${LAPACK_FLAGS:-$(find_openblas_dylib)}"
+    STATIC_LDFLAGS="$STATIC_LDFLAGS$SUPPORT_LINK_LIBS"
+    LAPACK_LABEL="shared OpenBLAS               BSD 3-clause"
 else
     LAPACK_FLAGS="${LAPACK_FLAGS:--lcralapack}"
+    LAPACK_LABEL="static OpenBLAS               BSD 3-clause"
 fi
-LAPACK_LABEL="static OpenBLAS               BSD 3-clause"
 echo "  lapack: $LAPACK_FLAGS"
 
 if [ "$PLATFORM" = "macos" ]; then
