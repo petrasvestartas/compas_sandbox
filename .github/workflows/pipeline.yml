@@ -49,10 +49,16 @@ jobs:
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          # JOBS=1: MUMPS' makefiles are missing dependencies, so a parallel build races
+          # and dies linking libcoinmumps -- always right after dtype3_root.F, and
+          # coinbrew reports nothing but "Build failed". It is intermittent, and it cost
+          # this pipeline several runs. Linux is the only platform that rebuilds IPOPT
+          # every time (macOS and Windows restore a cached stage tree), so it is the only
+          # one that keeps rolling the dice. Serial is slower and it finishes.
           CIBW_BEFORE_ALL_LINUX: >-
             dnf install -y --enablerepo=powertools
             glibc-static libstdc++-static openblas-static openblas-devel &&
-            env CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC"
+            env JOBS=1 CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC"
             {project}/packaging/build_ipopt.sh
           CIBW_ENVIRONMENT_LINUX: IPOPT_PREFIX=/project/build/ipopt/stage
         run: |
