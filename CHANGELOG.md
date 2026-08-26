@@ -5,11 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.7.6] 2026-08-26
 
 ### Added
 
 ### Changed
+
+* The Linux wheel jobs build IPOPT serially (`JOBS=1`). MUMPS' makefiles are missing dependencies, so a parallel build races and dies linking `libcoinmumps`, always just after `dtype3_root.F` and with coinbrew reporting no error at all. It cost three of six pipeline runs. Linux is where it showed up because it is the only platform that rebuilds IPOPT every run rather than restoring a cached stage tree. No change to the package itself.
 
 ### Removed
 
